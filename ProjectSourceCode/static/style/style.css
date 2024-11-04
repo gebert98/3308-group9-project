@@ -1,0 +1,62 @@
+/* Global Styles */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+}
+
+header {
+    background-color: #f4a261;
+    color: #fff;
+    padding: 10px 0;
+    text-align: center;
+}
+
+nav ul {
+    list-style: none;
+    padding: 0;
+}
+
+nav ul li {
+    display: inline;
+    margin-right: 15px;
+}
+
+nav ul li a {
+    color: #fff;
+    text-decoration: none;
+}
+
+main {
+    padding: 20px;
+}
+
+#recipe-intro {
+    text-align: center;
+}
+
+#recipe-intro img {
+    max-width: 100%;
+    height: auto;
+}
+
+#ingredients, #instructions {
+    margin-top: 20px;
+}
+
+h3 {
+    border-bottom: 2px solid #f4a261;
+    padding-bottom: 5px;
+}
+
+footer {
+    background-color: #264653;
+    color: #fff;
+    text-align: center;
+    padding: 10px 0;
+    position: fixed;
+    width: 100%;
+    bottom: 0;
+    left: 0;
+}
