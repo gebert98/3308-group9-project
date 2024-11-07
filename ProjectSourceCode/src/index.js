@@ -16,12 +16,28 @@ const hbs = handlebars.create({
   partialsDir: __dirname + '/views/partials',
 });
 
+
+
+app.get('/', (req, res) => {
+  res.redirect('/login'); 
+});
+app.get('/register', (req, res) => {
+  res.render('pages/register'); // Renders the register.hbs page
+});
+
+
 // Register `hbs` as our view engine using its bound `engine()` function.
 app.engine('hbs', hbs.engine);
 app.set('view engine', 'hbs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(bodyParser.json());
 // set Session
+const PORT = 3000;
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
+});
+
+
 app.use(
   session({
     secret: process.env.SESSION_SECRET,
@@ -29,6 +45,7 @@ app.use(
     resave: true,
   })
 );
+
 app.use(
   bodyParser.urlencoded({
     extended: true,
