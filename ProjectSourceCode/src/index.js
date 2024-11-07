@@ -6,7 +6,6 @@ const path = require('path');
 const pgp = require('pg-promise')();
 const bodyParser = require('body-parser');
 const session = require('express-session');
-
 // -------------------------------------  APP CONFIG   ----------------------------------------------
 
 // create `ExpressHandlebars` instance and configure the layouts and partials dir.
@@ -56,7 +55,14 @@ db.connect()
     console.log('ERROR', error.message || error);
   });
 
+
+//************  Test Routes  *********** */
+app.get('/welcome', (req, res) => {
+  res.json({status: 'success', message: 'Welcome!'});
+});
+
   // <!-- Login, Logout, Register Routes:
+  //************************************ */
 
 app.get('/register', (req, res) => {
 
