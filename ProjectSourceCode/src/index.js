@@ -72,3 +72,85 @@ db.connect()
   .catch(error => {
     console.log('ERROR', error.message || error);
   });
+
+  // <!-- Login, Logout, Register Routes:
+
+app.get('/register', (req, res) => {
+
+});
+
+app.post('/register', async (req, res) => {
+  // Extract username and password from the request body
+  const username = req.body.username;
+  const password = req.body.password;
+
+  // Hash the password using bcrypt library
+  const hash = await bcrypt.hash(password, 10);
+
+  // Insert username and hashed password into the 'users' table
+  try {
+      const result = await db.query(
+          'INSERT INTO users (username, password) VALUES ($1, $2);',
+          [username, hash]
+      );
+      
+      res.redirect('/login');
+  } 
+  catch (error) {
+    console.error("Error inserting user:", error); // Log the exact error
+    res.status(500).send("Error");
+}
+
+});
+
+app.get('/login', (req, res) => {
+  res.render('pages/login',{});
+  });
+
+  app.post('/login', async (req, res) => {
+    const username = req.body.username;
+    const password = req.body.password;
+
+    try {
+        
+        const result = await db.query(
+            'SELECT * FROM users WHERE username = $1;',
+            [username]
+        );
+
+        if (result.length === 0) {
+            console.log('User not found');
+            return res.redirect('/register'); // Redirect to registration if user not found
+        }
+
+        const user = result[0];
+
+        const match = await bcrypt.compare(password, user.password);
+
+        if (!match) {
+            console.log('Invalid password');
+            return res.status(400).render('login', { message: 'Invalid password' });
+        }
+
+        req.session.user = user;
+
+        req.session.save(() => {
+            res.redirect('/discover');
+        });
+
+    } catch (error) {
+        console.error("Error during login:", error);
+        res.status(500).send('Error during login');
+    }
+});
+
+app.get('/logout', (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      console.error("Error destroying session:", err);
+      return res.status(500).send("Could not log out.");
+    }
+    res.redirect('/login');
+  });
+});
+//*****************************************************
