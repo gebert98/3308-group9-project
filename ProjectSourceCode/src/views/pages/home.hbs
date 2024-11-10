@@ -1,15 +1,57 @@
-<h2>Login</h2>
-<form action="/login" method="POST">
-  <div class="mb-3">
-    <label for="username" class="form-label">Username</label>
-    <input type="text" class="form-control" id="username" name="username" required>
-  </div>
-  <div class="mb-3">
-    <label for="password" class="form-label">Password</label>
-    <input type="password" class="form-control" id="password" name="password" required>
-  </div>
-  <button type="submit" class="btn btn-primary">Login</button>
-</form>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rotating Globe</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+    <script>
+        // Set up the scene, camera, and renderer
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
 
+        // Add a sphere geometry for the globe
+        const geometry = new THREE.SphereGeometry(5, 32, 32);
+        const textureLoader = new THREE.TextureLoader();
+       const texture = textureLoader.load('Globe.jpg');
+ 
+        const material = new THREE.MeshBasicMaterial({ map: texture });
+        const globe = new THREE.Mesh(geometry, material);
+        scene.add(globe);
 
-<p>Don't have an account? <a href="/register">Register here</a></p>
+        // Position the camera
+        camera.position.z = 10;
+
+        // Add OrbitControls for interaction
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            globe.rotation.y += 0.001; // Adjust rotation speed if needed
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Handle window resizing
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        console.log(globe); // Log the globe object
+        console.log(scene.children); // Log the scene's children to confirm the globe is part of it
+
+    </script>
+</body>
+</html>
