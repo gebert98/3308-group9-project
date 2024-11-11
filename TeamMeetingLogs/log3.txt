@@ -1,0 +1,7 @@
+- Tyler set up a working globe
+- Max set up database
+- Gaeryth worked on login and register
+
+- Make sure to do test cases
+- maybe pick up the pace
+- Next lab will be project worktime
