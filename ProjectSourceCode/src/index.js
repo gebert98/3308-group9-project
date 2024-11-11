@@ -6,6 +6,7 @@ const path = require('path');
 const pgp = require('pg-promise')();
 const bodyParser = require('body-parser');
 const session = require('express-session');
+const bcrypt = require('bcrypt');
 
 // -------------------------------------  APP CONFIG   ----------------------------------------------
 
@@ -77,6 +78,7 @@ db.connect()
 
   // <!-- Login, Logout, Register Routes:
 
+
 app.post('/register', async (req, res) => {
   // Extract username and password from the request body
   const username = req.body.username;
@@ -133,13 +135,23 @@ app.get('/login', (req, res) => {
         req.session.user = user;
 
         req.session.save(() => {
-            //res.redirect('/discover');
+
+            res.redirect('/home');
         });
 
     } catch (error) {
         console.error("Error during login:", error);
         res.status(500).send('Error during login');
     }
+});
+
+app.get('/home', (req, res) => {
+  if (!req.session.user) {
+    return res.redirect('/login'); // Redirect to login if not logged in
+  }
+
+  const username = req.session.user.username;
+  res.render('pages/home', { username });
 });
 
 app.get('/logout', (req, res) => {
