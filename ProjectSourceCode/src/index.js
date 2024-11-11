@@ -18,14 +18,16 @@ const hbs = handlebars.create({
 });
 
 
+app.get('/home', (req, res) => {
+  res.render('pages/home'); // This is correct based on your structure.
+});
 
 app.get('/', (req, res) => {
-  res.redirect('/login'); 
+  res.redirect('/home'); 
 });
 app.get('/register', (req, res) => {
-  res.render('pages/register'); // Renders the register.hbs page
+  res.render('pages/register'); // This is correct based on your structure.
 });
-
 
 // Register `hbs` as our view engine using its bound `engine()` function.
 app.engine('hbs', hbs.engine);
@@ -98,8 +100,8 @@ app.post('/register', async (req, res) => {
     console.error("Error inserting user:", error); // Log the exact error
     res.status(500).send("Error");
 }
-
 });
+
 
 app.get('/login', (req, res) => {
   res.render('pages/login',{});
@@ -133,6 +135,7 @@ app.get('/login', (req, res) => {
         req.session.user = user;
 
         req.session.save(() => {
+
             res.redirect('/home');
         });
 

@@ -1,5 +1,73 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rotating Globe</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+    </style>
+
+    <!-- Importmap setup for Three.js and addons -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.134.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.134.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <!-- Your main script using imports -->
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // Set up the scene, camera, and renderer
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Add ambient light
+        const light = new THREE.AmbientLight(0xffffff, 1); // White light with full intensity
+        scene.add(light);
+
+        // Add a sphere geometry for the globe
+        const geometry = new THREE.SphereGeometry(5, 32, 32);
+        const textureLoader = new THREE.TextureLoader();
+        const texture = textureLoader.load('https://cdna.artstation.com/p/marketplace/presentation_assets/000/374/630/large/file.jpg?1589438924'); // Replace with a valid URL
+        const material = new THREE.MeshBasicMaterial({ map: texture });
+        const globe = new THREE.Mesh(geometry, material);
+        scene.add(globe);
+
+        // Position the camera
+        camera.position.z = 10;
+
+        // Add OrbitControls for interaction
+        const controls = new OrbitControls(camera, renderer.domElement);
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            globe.rotation.y += 0.001; // Adjust rotation speed if needed
+            controls.update(); // Required if controls.enableDamping = true, or controls.auto-rotation
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Handle window resizing
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</head>
 <body>
-    <div class="container mt-5">
-        <h2 class="text-center mb-4">Welcome {{username}}</h2>
-    </div>
 </body>
+</html>
+
