@@ -65,16 +65,29 @@ const dbConfig = {
 };
 const db = pgp(dbConfig);
 
+// function to retry db connection because somtimes it takes too long
+// (only needed for when the db and node are starting at the same time)
+const waitForDatabase = async (retries = 3, interval = 3000) => {
+  while (retries > 0) {
+    try {
+      // try connecting to db
+      await db.connect();
+      console.log('Database connection successful');
+      return; // it worked so return
+    } catch (error) {
+      console.log('Database not ready, retrying...', retries);
+      retries--;
+      await new Promise(r => setTimeout(r, interval)); // wait for `interval` ms before retryin
+    }
+  }
+  console.log('Failed to connect to the database after multiple attempts.');
+  process.exit(1); // exit if the db dosn't start
+};
+
+
 // db test
-db.connect()
-  .then(obj => {
-    // Can check the server version here (pg-promise v10.1.0+):
-    console.log('Database connection successful');
-    obj.done(); // success, release the connection;
-  })
-  .catch(error => {
-    console.log('ERROR', error.message || error);
-  });
+waitForDatabase();
+
 
   // <!-- Login, Logout, Register Routes:
 
