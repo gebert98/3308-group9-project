@@ -20,13 +20,6 @@ CREATE TABLE IF NOT EXISTS ingredients (
   vegan BOOLEAN NOT NULL DEFAULT FALSE
 );
 
-CREATE TABLE IF NOT EXISTS recipes_to_ingredients (
-    id SERIAL PRIMARY KEY,
-    recipe_id INT REFERENCES recipes(recipe_id) ON DELETE CASCADE,
-    ingredient_id INT REFERENCES ingredients(ingredient_id) ON DELETE CASCADE,
-    quantity DECIMAL(5, 2),
-    unit VARCHAR(20)
-);
 
 CREATE TABLE IF NOT EXISTS favorites (
   user_id INTEGER,
