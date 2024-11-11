@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS users (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS recipes (
+CREATE TABLE IF NOT EXISTS recipes ( -- didn't add location bc format is still unsure
   id SERIAL PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
   description VARCHAR(4000),
@@ -26,6 +26,8 @@ CREATE TABLE IF NOT EXISTS favorites (
 );
 
 CREATE TABLE IF NOT EXISTS recipes_ingredients (
+  quantity INTEGER,
+  unit varchar(50),
   recipe_id INTEGER,
   ingredient_id INTEGER
 );
