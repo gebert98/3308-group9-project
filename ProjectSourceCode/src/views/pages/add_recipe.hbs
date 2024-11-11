@@ -1,0 +1,60 @@
+<form action="/add_recipe" method="POST">
+    <!-- Recipe Title -->
+    <div class="form-group">
+        <label for="title">Recipe Title</label>
+        <input type="text" class="form-control" id="title" name="title" required>
+    </div>
+
+    <!-- Country -->
+    <div class="form-group">
+        <label for="country_id">Country</label>
+        <select class="form-control" id="country_id" name="country_id" required>
+            {{#each countries}}
+            <option value="{{this.country_id}}">{{this.name}}</option>
+            {{/each}}
+        </select>
+    </div>
+
+    <!-- Description -->
+    <div class="form-group">
+        <label for="description">Description</label>
+        <textarea class="form-control" id="description" name="description" rows="4"></textarea>
+    </div>
+
+    <!-- Preparation Time -->
+    <div class="form-group">
+        <label for="prep_time">Preparation Time (minutes)</label>
+        <input type="number" class="form-control" id="prep_time" name="prep_time" min="0">
+    </div>
+
+    <!-- Cook Time -->
+    <div class="form-group">
+        <label for="cook_time">Cook Time (minutes)</label>
+        <input type="number" class="form-control" id="cook_time" name="cook_time" min="0">
+    </div>
+
+    <!-- Servings -->
+    <div class="form-group">
+        <label for="servings">Servings</label>
+        <input type="number" class="form-control" id="servings" name="servings" min="1" required>
+    </div>
+
+    <!-- Difficulty -->
+    <div class="form-group">
+        <label for="difficulty">Difficulty</label>
+        <select class="form-control" id="difficulty" name="difficulty" required>
+            <option value="easy">Easy</option>
+            <option value="moderate">Moderate</option>
+            <option value="hard">Hard</option>
+        </select>
+    </div>
+
+    <!-- Ingredients -->
+    <div class="form-group">
+        <label for="ingredients">Ingredients (comma separated)</label>
+        <input type="text" class="form-control" id="ingredients" name="ingredients" placeholder="e.g., 1 cup flour, 2 tbsp sugar">
+    </div>
+
+    <!-- Submit Button -->
+    <button type="submit" class="btn btn-primary mt-3">Add Recipe</button>
+</form>
