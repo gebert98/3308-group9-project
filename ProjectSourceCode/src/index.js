@@ -177,3 +177,81 @@ app.get('/logout', (req, res) => {
   });
 });
 //*****************************************************
+app.get('/add-recipe',(req, res) => {
+  res.render('pages/add_recipe'); // This is correct based on your structure.
+});
+
+app.post('/add_recipe', async (req, res) => {
+  try {
+      const {
+          title,
+          country_id,
+          description,
+          prep_time,
+          cook_time,
+          servings,
+          difficulty,
+          ingredients
+      } = req.body;
+
+      // Step 1: Insert the recipe into the `recipes` table
+      const recipeResult = await pool.query(
+          `INSERT INTO recipes (name, country_id, description, prep_time, cook_time, servings, difficulty)
+          VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+          [title, country_id, description, prep_time, cook_time, servings, difficulty]
+      );
+      const recipeId = recipeResult.rows[0].id;
+
+      // Step 2: Insert ingredients into the `recipes_ingredients` table
+      if (ingredients) {
+          const ingredientsArray = ingredients.split(',').map(ingredient => ingredient.trim());
+          
+          for (let ingredient of ingredientsArray) {
+              // Assuming ingredient has a format like "1 cup flour"
+              const [quantity, unit, ...nameParts] = ingredient.split(' ');
+              const name = nameParts.join(' ');
+
+              // Check if the ingredient already exists in the `ingredients` table
+              let ingredientResult = await pool.query(
+                  `SELECT id FROM ingredients WHERE name = $1`,
+                  [name]
+              );
+
+              let ingredientId;
+              if (ingredientResult.rows.length > 0) {
+                  ingredientId = ingredientResult.rows[0].id;
+              } else {
+                  // If not found, insert the new ingredient
+                  const newIngredientResult = await pool.query(
+                      `INSERT INTO ingredients (name) VALUES ($1) RETURNING id`,
+                      [name]
+                  );
+                  ingredientId = newIngredientResult.rows[0].id;
+              }
+
+              // Insert into the `recipes_ingredients` table
+              await pool.query(
+                  `INSERT INTO recipes_ingredients (recipe_id, ingredient_id, quantity, unit)
+                  VALUES ($1, $2, $3, $4)`,
+                  [recipeId, ingredientId, quantity || null, unit || null]
+              );
+          }
+      }
+
+      // Redirect or send a success response
+      res.redirect('/recipes');
+  } catch (err) {
+      console.error(err);
+      res.status(500).send('Error adding recipe');
+  }
+});
+
+// For example test *********************************/ 
+app.get('/welcome', (req, res) => {
+  res.json({status: 'success', message: 'Welcome!'});
+});
+/*************************************************** */
+
+app.listen(3000, () => {
+  console.log('Server is running on port 3000');
+});

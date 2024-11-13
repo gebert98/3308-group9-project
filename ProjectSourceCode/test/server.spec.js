@@ -28,5 +28,50 @@ describe('Server!', () => {
 });
 
 // *********************** TODO: WRITE 2 UNIT TESTCASES **************************
+describe('Test Register', () => {
+  // Sample test case given to test / endpoint.
+  it('positive : /register', done => {
+    chai
+      .request(server)
+      .post('/register')
+      .send({username: 'John-Doe', password: '123'})
+      .end((err, res) => {
+        expect(res).to.have.status(200);
+        expect(res.body.message).to.equals('Success');
+        done();
+      });
+  });
+});
+
+describe('Test Login', () => {
+  // Sample test case given to test / endpoint.
+  it('positive : /login', done => {
+    chai
+      .request(server)
+      .post('/register')
+      .send({username: 'John-Doe', password: '123'})
+      .end((err, res) => {
+        expect(res).to.have.status(200);
+        expect(res.body.message).to.equals('Success');
+        done();
+      });
+  });
+});
+
+describe('Test Login', () => {
+  // Sample test case given to test / endpoint.
+  it('negative : /login', done => {
+    chai
+      .request(server)
+      .post('/register')
+      .send({username: 'JohnDoe', password: '1234'})
+      .end((err, res) => {
+        expect(res).to.have.status(200);
+        expect(res.body.message).to.equals('Success');
+        done();
+      });
+  });
+});
+
 
 // ********************************************************************************
