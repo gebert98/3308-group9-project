@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rotating Globe</title>
+    <title>Interactive Rotating Globe</title>
     <style>
         body { margin: 0; }
         canvas { display: block; }
@@ -20,7 +19,7 @@
     }
     </script>
 
-    <!-- Your main script using imports -->
+    <!-- Main script -->
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -33,13 +32,13 @@
         document.body.appendChild(renderer.domElement);
 
         // Add ambient light
-        const light = new THREE.AmbientLight(0xffffff, 1); // White light with full intensity
+        const light = new THREE.AmbientLight(0xffffff, 1);
         scene.add(light);
 
         // Add a sphere geometry for the globe
         const geometry = new THREE.SphereGeometry(5, 32, 32);
         const textureLoader = new THREE.TextureLoader();
-        const texture = textureLoader.load('https://cdna.artstation.com/p/marketplace/presentation_assets/000/374/630/large/file.jpg?1589438924'); // Replace with a valid URL
+        const texture = textureLoader.load('https://assets-global.website-files.com/62eb870036357a73104e20ad/62ff338f7c1a4277f9232e5f_PlanetSAT_2022_World_Web.jpg'); // Replace with a valid URL
         const material = new THREE.MeshBasicMaterial({ map: texture });
         const globe = new THREE.Mesh(geometry, material);
         scene.add(globe);
@@ -50,24 +49,131 @@
         // Add OrbitControls for interaction
         const controls = new OrbitControls(camera, renderer.domElement);
 
+        // Set up raycaster and mouse vector
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+        // Event listener for mouse clicks
+        /*
+        window.addEventListener('click', (event) => {
+            // Calculate mouse position in normalized device coordinates (-1 to +1)
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            // Update the raycaster with the camera and mouse position
+            raycaster.setFromCamera(mouse, camera);
+
+            // Check for intersections with the globe
+            const intersects = raycaster.intersectObject(globe);
+            if (intersects.length > 0) {
+                console.log('Globe clicked!', intersects[0]);
+                alert('You clicked on the globe at coordinates: ' + JSON.stringify(intersects[0].point));
+            }
+        });
+        */
+
         // Animation loop
         function animate() {
             requestAnimationFrame(animate);
-            globe.rotation.y += 0.001; // Adjust rotation speed if needed
-            controls.update(); // Required if controls.enableDamping = true, or controls.auto-rotation
+            globe.rotation.y += 0.001;
+            controls.update();
             renderer.render(scene, camera);
         }
         animate();
-
+        
         // Handle window resizing
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
+        const continents = [
+    { name: "North America", latMin: 10, latMax: 70, lonMin: -170, lonMax: -50 },
+    { name: "South America", latMin: -60, latMax: 15, lonMin: -90, lonMax: -30 },
+    { name: "Europe", latMin: 35, latMax: 70, lonMin: -10, lonMax: 40 },
+    { name: "Africa", latMin: -35, latMax: 35, lonMin: -20, lonMax: 50 },
+    { name: "Asia", latMin: 5, latMax: 80, lonMin: 40, lonMax: 180 },
+    { name: "Australia", latMin: -50, latMax: -10, lonMin: 110, lonMax: 155 },
+    { name: "Antarctica", latMin: -90, latMax: -60, lonMin: -180, lonMax: 180 }
+];
+
+        function latLonToVector3(lat, lon, radius) {
+            const phi = (90 - lat) * (Math.PI / 180); // Convert latitude to radians
+            const theta = (lon + 180) * (Math.PI / 180); // Convert longitude to radians
+
+            const x = -radius * Math.sin(phi) * Math.cos(theta);
+            const z = radius * Math.sin(phi) * Math.sin(theta);
+            const y = radius * Math.cos(phi);
+
+            return new THREE.Vector3(x, y, z);
+        }
+    function vector3ToLatLon(point) {
+      const radius = point.length();
+      const lat = 90 - (Math.acos(point.y / radius) * 180 / Math.PI);
+      const lon = ((Math.atan2(point.z, point.x) * 180 / Math.PI) + 180) % 360 - 180;
+      return { lat, lon };
+    }
+
+    async function drawBoundaries(globeRadius) {
+    // Fetch GeoJSON data (replace with your source)
+    const response = await fetch('countries.geojson');
+    const geoJsonData = await response.json();
+
+    const lineMaterial = new THREE.LineBasicMaterial({ color: 0xff0000 });
+
+    geoJsonData.features.forEach(feature => {
+        // GeoJSON geometry type can be MultiPolygon or Polygon
+        const coordinates = feature.geometry.coordinates;
+
+        coordinates.forEach(polygon => {
+            polygon.forEach(ring => { // Each ring defines part of the boundary
+                const vertices = [];
+                ring.forEach(([lon, lat]) => {
+                    const vertex = latLonToVector3(lat, lon, globeRadius);
+                    vertices.push(vertex.x, vertex.y, vertex.z);
+                });
+
+                const geometry = new THREE.BufferGeometry();
+                geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+
+                // Create line from geometry and add to the scene
+                const line = new THREE.Line(geometry, lineMaterial);
+                scene.add(line);
+            });
+        });
+    });
+    
+}
+
+// Call the function with your globe's radius
+drawBoundaries(5); // Adjust based on your sphere's radius
+
+    window.addEventListener('click', (event) => {
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        raycaster.setFromCamera(mouse, camera);
+
+        const intersects = raycaster.intersectObject(globe);
+        if (intersects.length > 0) {
+            const clickPoint = intersects[0].point;
+            const { lat, lon } = vector3ToLatLon(clickPoint);
+
+            // Check which continent was clicked
+            for (const continent of continents) {
+                if (
+                    lat >= continent.latMin && lat <= continent.latMax &&
+                    lon >= continent.lonMin && lon <= continent.lonMax
+                ) {
+                    alert('You clicked on ' + continent.name);
+                    break;
+                }
+            }
+        }
+    });
+
+
     </script>
 </head>
 <body>
 </body>
 </html>
-
