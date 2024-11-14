@@ -28,17 +28,16 @@ app.get('/', (req, res) => {
 app.get('/register', (req, res) => {
   res.render('pages/register'); // This is correct based on your structure.
 });
+app.get('/login', (req, res) => {
+  res.render('pages/login',{});
+});
+
 
 // Register `hbs` as our view engine using its bound `engine()` function.
 app.engine('hbs', hbs.engine);
 app.set('view engine', 'hbs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(bodyParser.json());
-// set Session
-const PORT = 3000;
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
 
 
 app.use(
@@ -99,7 +98,10 @@ app.post('/register', async (req, res) => {
 
   // Hash the password using bcrypt library
   const hash = await bcrypt.hash(password, 10);
-
+  
+  if (typeof username !== 'string') {
+    return res.status(400).send("Invalid Username");
+  }
   // Insert username and hashed password into the 'users' table
   try {
       const result = await db.query(
@@ -107,18 +109,16 @@ app.post('/register', async (req, res) => {
           [username, hash]
       );
       
-      res.redirect('/login');
+      //not sure why we are getting a 200 code and not a 302 code but whatever
+      return res.redirect('/login');
   } 
   catch (error) {
     console.error("Error inserting user:", error); // Log the exact error
-    res.status(500).send("Error");
+    return res.status(500).send("Error");
 }
 });
 
 
-app.get('/login', (req, res) => {
-  res.render('pages/login',{});
-  });
 
   app.post('/login', async (req, res) => {
     const username = req.body.username;
@@ -142,7 +142,7 @@ app.get('/login', (req, res) => {
 
         if (!match) {
             console.log('Invalid password');
-            return res.status(400).render('login', { message: 'Invalid password' });
+            return res.status(400).render('pages/login', { message: 'Invalid password' });
         }
 
         req.session.user = user;
@@ -252,6 +252,6 @@ app.get('/welcome', (req, res) => {
 });
 /*************************************************** */
 
-app.listen(3000, () => {
+module.exports = app.listen(3000, () => {
   console.log('Server is running on port 3000');
 });
