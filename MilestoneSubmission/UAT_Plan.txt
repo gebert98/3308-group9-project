@@ -1,0 +1,18 @@
+Our user acceptance tests will be conducted in the same localhost environment we are using for development. User acceptence testers can use a username and password
+of their own creation. They should also be able to add recipes with random values. So we don't need to provide specific data.
+
+1: Test Register
+    - User acceptance tester wil be able to create an account with a username and password
+    - User acceptance tester is seamlessly transitiond to a home page to use the website
+    - User acceptance tester will be able to log in with newly registered account.
+2: Test Login
+    - Able to log in and out.
+    - Full access to features when logged in, no access if logged out
+3: Test Recipe Search
+    - Able to search recipe by country
+    - Access returned search results for more information
+    - Repeated searches should be easy
+4: Test Add Recipe
+    - User should be able to add recipe successfully to database
+    - After adding the recipe the user should be able to search and access the newly added recipe
+    - Recipe that is added should be mapped to a country.
