@@ -246,6 +246,47 @@ app.post('/add_recipe', async (req, res) => {
   }
 });
 
+
+// *********************************************************
+// display recipe based on id
+
+app.get('/recipe/:id', async (req, res) => {
+  const id = req.params.id;
+  const query1 = 'SELECT * FROM recipes WHERE id = $1';
+  const query2 = `
+    SELECT
+      i.name AS name,
+      ri.quantity,
+      ri.unit
+    FROM recipes r
+    JOIN recipes_ingredients ri ON r.id = ri.recipe_id
+    JOIN ingredients i ON ri.ingredient_id = i.id
+    WHERE r.id = $1`;
+  try{
+    const results = await db.any (query1, [id]);
+    const ingredients = await db.any(query2, [id]);
+
+    //console.log(results + "\n" + ingredients);
+    if(results.length == 0){
+      return res.status(404).send('Error: No such recipe');
+    }
+
+    const recipe = {
+      name: results[0].name,
+      description: results[0].description,
+      instructions: results[0].instructions,
+      ingredients: ingredients
+    }
+    console.log(recipe);
+    res.render('pages/display_recipe', {recipe});
+
+  }
+  catch(e) {
+    console.error(e);
+    res.status(500).send('Database Error');
+  }
+});
+
 // For example test *********************************/ 
 app.get('/welcome', (req, res) => {
   res.json({status: 'success', message: 'Welcome!'});

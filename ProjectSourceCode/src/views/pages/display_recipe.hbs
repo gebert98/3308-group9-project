@@ -1,0 +1,27 @@
+<h1>{{recipe.name}}</h1>
+<p>{{recipe.description}}</h1>
+<h3>Ingredients:</h3>
+<ul> 
+  {{#each recipe.ingredients}}
+    <li>{{this.quantity}} {{this.unit}} {{name}} </li>
+  {{/each}}
+</ul>
+
+<h3>Instructions:</h3>
+<p>{{recipe.instructions}}</p>
+
+<button id="favoriteBtn"
+  {{#if isFavorited}}style="display:none;"{{/if}}
+  onclick="toggleFavorite({{recipe.id}})">
+  Add to Favorites
+</button>
+
+<span id="favoriteInd"
+  {{#unless isFavorited}}style="display:none;"{{/unless}}
+  <strong>Saved to Favorites!</strong>
+</span>
+
+
+<script>
+
+</script>
