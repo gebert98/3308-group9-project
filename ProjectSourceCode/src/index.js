@@ -185,115 +185,87 @@ app.get('/add-recipe', (req, res) => {
 });
 
 app.post('/add_recipe', async (req, res) => {
-  const client = await db.connect(); // Assuming db.connect() returns a client object
+  const { title, country, description, prep_time, cook_time, servings, difficulty, ingredients } = req.body;
+
+  let client;
   try {
-    console.log("Received form data:", req.body);
+    client = await db.connect();
 
-    const {
-      title,
-      description,
-      prep_time,
-      cook_time,
-      servings,
-      difficulty,
-      ingredients
-    } = req.body;
-
-    // Check if all required fields are present
-    if (!title || !description || !prep_time || !cook_time || !servings || !difficulty) {
-      throw new Error("Missing required fields");
-    }
-
-    const country = "Test Country"; // Hardcoded country name
-
-    // Step 1: Start a transaction
-    await client.query('BEGIN');
-
-    // Step 2: Insert the recipe into the `recipes` table
+    // Insert the new recipe into the recipes table
     const recipeResult = await client.query(
-      `INSERT INTO recipes (name, country, description, prep_time, cook_time, servings, difficulty)
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
-      [title, country, description, prep_time, cook_time, servings, difficulty]
+      `INSERT INTO recipes (name, description, country, prep_time, cook_time, servings, difficulty)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING id`,
+      [title, description, country, prep_time, cook_time, servings, difficulty]
     );
 
-    console.log("Recipe query result:", recipeResult); // Debug log for query result
+    console.log('Recipe query result:', recipeResult.rows);
 
     // Check if the recipe insertion returned a valid ID
-    if (!recipeResult || !recipeResult.rows || recipeResult.rows.length === 0) {
+    if (!recipeResult.rows || recipeResult.rows.length === 0) {
       throw new Error("Recipe insertion failed");
     }
 
     const recipeId = recipeResult.rows[0].id;
-    console.log("Recipe inserted with ID:", recipeId);
+    console.log(`Inserted Recipe ID: ${recipeId}`);
 
-    // Step 3: Insert ingredients into the `recipes_ingredients` table if present
-    if (ingredients) {
-      const ingredientsArray = ingredients.split(',').map(ingredient => ingredient.trim());
+    // Split the ingredients by comma and insert into the ingredients table
+    const ingredientsList = ingredients.split(',').map(ingredient => ingredient.trim());
 
-      // Handle each ingredient
-      for (let ingredient of ingredientsArray) {
-        const [quantity, unit, ...nameParts] = ingredient.split(' ');
-        const name = nameParts.join(' ');
-
-        console.log("Processing ingredient:", name); // Debug log for each ingredient
-
-        // Insert ingredient into `ingredients` table if it doesn't exist
-        let ingredientResult = await client.query(`SELECT id FROM ingredients WHERE name = $1`, [name]);
-
-        let ingredientId;
-        if (ingredientResult.rows.length > 0) {
-          ingredientId = ingredientResult.rows[0].id;
-        } else {
-          const newIngredientResult = await client.query(
-            `INSERT INTO ingredients (name) VALUES ($1) RETURNING id`,
-            [name]
-          );
-
-          if (!newIngredientResult || newIngredientResult.rows.length === 0) {
-            throw new Error("Ingredient insertion failed");
-          }
-
-          ingredientId = newIngredientResult.rows[0].id;
-        }
-
-        // Insert into `recipes_ingredients` table
+    for (let ingredient of ingredientsList) {
+      if (ingredient) {
         await client.query(
           `INSERT INTO recipes_ingredients (recipe_id, ingredient_id, quantity, unit)
-           VALUES ($1, $2, $3, $4)`,
-          [recipeId, ingredientId, quantity || null, unit || null]
+           VALUES ($1, (SELECT id FROM ingredients WHERE name = $2 LIMIT 1), 1, 'unit')`,
+          [recipeId, ingredient]
         );
-
-        console.log(`Inserted ingredient: ${name} with quantity: ${quantity}`);
       }
     }
 
-    // Step 4: Commit the transaction
-    await client.query('COMMIT');
-
-    res.status(201).send("Recipe added successfully");
+    res.status(200).send('Recipe added successfully');
   } catch (error) {
-    console.error("Error adding recipe:", error);
-
-    // Rollback in case of error
-    try {
-      await client.query('ROLLBACK');
-    } catch (rollbackError) {
-      console.error("Error during rollback:", rollbackError);
-    }
-
-    res.status(500).send("Error adding recipe");
+    console.error('Error adding recipe:', error);
+    res.status(500).send('Error adding recipe');
   } finally {
-    // Check if client.release() is a valid method for your db client
-    if (client.release) {
-      client.release();
-    } else {
-      console.log("client.release() is not a function, skipping release.");
+    if (client) {
+      try {
+        client.release();
+      } catch (releaseError) {
+        console.warn('client.release() is not a function, skipping release.');
+      }
     }
   }
 });
 
+/********* Get Recipes For Country *********/
+app.post('/get_recipes', async (req, res) => {
+  // Extract country from the request body
+  const { country } = req.body;
+  
+  // If the country is not provided, return a bad request response
+  if (!country) {
+    return res.status(400).json({ error: "Country is required" });
+  }
 
+  try {
+    // Query to get all recipes for the specified country
+    const result = await db.query(
+      'SELECT * FROM recipes WHERE country = $1;',
+      [country]
+    );
 
+    // If no recipes are found, return an empty array
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: `No recipes found for country: ${country}` });
+    }
+
+    // Return the recipes found
+    res.status(200).json(result.rows);
+  } catch (error) {
+    console.error("Error fetching recipes:", error);
+    res.status(500).json({ error: "An error occurred while fetching recipes" });
+  }
+});
 
 // For example test *********************************/ 
 app.get('/welcome', (req, res) => {
