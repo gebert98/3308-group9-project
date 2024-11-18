@@ -7,6 +7,8 @@ const pgp = require('pg-promise')();
 const bodyParser = require('body-parser');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 
 // -------------------------------------  APP CONFIG   ----------------------------------------------
 
@@ -177,74 +179,121 @@ app.get('/logout', (req, res) => {
   });
 });
 //*****************************************************
-app.get('/add-recipe',(req, res) => {
-  res.render('pages/add_recipe'); // This is correct based on your structure.
+app.get('/add-recipe', (req, res) => {
+  const countries = [{ id: 1, name: 'Test Country' }]; // Hardcoded country
+  res.render('pages/add_recipe', { countries });
 });
 
 app.post('/add_recipe', async (req, res) => {
+  const client = await db.connect(); // Assuming db.connect() returns a client object
   try {
-      const {
-          title,
-          country_id,
-          description,
-          prep_time,
-          cook_time,
-          servings,
-          difficulty,
-          ingredients
-      } = req.body;
+    console.log("Received form data:", req.body);
 
-      // Step 1: Insert the recipe into the `recipes` table
-      const recipeResult = await pool.query(
-          `INSERT INTO recipes (name, country_id, description, prep_time, cook_time, servings, difficulty)
-          VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
-          [title, country_id, description, prep_time, cook_time, servings, difficulty]
-      );
-      const recipeId = recipeResult.rows[0].id;
+    const {
+      title,
+      description,
+      prep_time,
+      cook_time,
+      servings,
+      difficulty,
+      ingredients
+    } = req.body;
 
-      // Step 2: Insert ingredients into the `recipes_ingredients` table
-      if (ingredients) {
-          const ingredientsArray = ingredients.split(',').map(ingredient => ingredient.trim());
-          
-          for (let ingredient of ingredientsArray) {
-              // Assuming ingredient has a format like "1 cup flour"
-              const [quantity, unit, ...nameParts] = ingredient.split(' ');
-              const name = nameParts.join(' ');
+    // Check if all required fields are present
+    if (!title || !description || !prep_time || !cook_time || !servings || !difficulty) {
+      throw new Error("Missing required fields");
+    }
 
-              // Check if the ingredient already exists in the `ingredients` table
-              let ingredientResult = await pool.query(
-                  `SELECT id FROM ingredients WHERE name = $1`,
-                  [name]
-              );
+    const country = "Test Country"; // Hardcoded country name
 
-              let ingredientId;
-              if (ingredientResult.rows.length > 0) {
-                  ingredientId = ingredientResult.rows[0].id;
-              } else {
-                  // If not found, insert the new ingredient
-                  const newIngredientResult = await pool.query(
-                      `INSERT INTO ingredients (name) VALUES ($1) RETURNING id`,
-                      [name]
-                  );
-                  ingredientId = newIngredientResult.rows[0].id;
-              }
+    // Step 1: Start a transaction
+    await client.query('BEGIN');
 
-              // Insert into the `recipes_ingredients` table
-              await pool.query(
-                  `INSERT INTO recipes_ingredients (recipe_id, ingredient_id, quantity, unit)
-                  VALUES ($1, $2, $3, $4)`,
-                  [recipeId, ingredientId, quantity || null, unit || null]
-              );
+    // Step 2: Insert the recipe into the `recipes` table
+    const recipeResult = await client.query(
+      `INSERT INTO recipes (name, country, description, prep_time, cook_time, servings, difficulty)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+      [title, country, description, prep_time, cook_time, servings, difficulty]
+    );
+
+    console.log("Recipe query result:", recipeResult); // Debug log for query result
+
+    // Check if the recipe insertion returned a valid ID
+    if (!recipeResult || !recipeResult.rows || recipeResult.rows.length === 0) {
+      throw new Error("Recipe insertion failed");
+    }
+
+    const recipeId = recipeResult.rows[0].id;
+    console.log("Recipe inserted with ID:", recipeId);
+
+    // Step 3: Insert ingredients into the `recipes_ingredients` table if present
+    if (ingredients) {
+      const ingredientsArray = ingredients.split(',').map(ingredient => ingredient.trim());
+
+      // Handle each ingredient
+      for (let ingredient of ingredientsArray) {
+        const [quantity, unit, ...nameParts] = ingredient.split(' ');
+        const name = nameParts.join(' ');
+
+        console.log("Processing ingredient:", name); // Debug log for each ingredient
+
+        // Insert ingredient into `ingredients` table if it doesn't exist
+        let ingredientResult = await client.query(`SELECT id FROM ingredients WHERE name = $1`, [name]);
+
+        let ingredientId;
+        if (ingredientResult.rows.length > 0) {
+          ingredientId = ingredientResult.rows[0].id;
+        } else {
+          const newIngredientResult = await client.query(
+            `INSERT INTO ingredients (name) VALUES ($1) RETURNING id`,
+            [name]
+          );
+
+          if (!newIngredientResult || newIngredientResult.rows.length === 0) {
+            throw new Error("Ingredient insertion failed");
           }
-      }
 
-      // Redirect or send a success response
-      res.redirect('/recipes');
-  } catch (err) {
-      console.error(err);
-      res.status(500).send('Error adding recipe');
+          ingredientId = newIngredientResult.rows[0].id;
+        }
+
+        // Insert into `recipes_ingredients` table
+        await client.query(
+          `INSERT INTO recipes_ingredients (recipe_id, ingredient_id, quantity, unit)
+           VALUES ($1, $2, $3, $4)`,
+          [recipeId, ingredientId, quantity || null, unit || null]
+        );
+
+        console.log(`Inserted ingredient: ${name} with quantity: ${quantity}`);
+      }
+    }
+
+    // Step 4: Commit the transaction
+    await client.query('COMMIT');
+
+    res.status(201).send("Recipe added successfully");
+  } catch (error) {
+    console.error("Error adding recipe:", error);
+
+    // Rollback in case of error
+    try {
+      await client.query('ROLLBACK');
+    } catch (rollbackError) {
+      console.error("Error during rollback:", rollbackError);
+    }
+
+    res.status(500).send("Error adding recipe");
+  } finally {
+    // Check if client.release() is a valid method for your db client
+    if (client.release) {
+      client.release();
+    } else {
+      console.log("client.release() is not a function, skipping release.");
+    }
   }
 });
+
+
+
 
 // For example test *********************************/ 
 app.get('/welcome', (req, res) => {
@@ -252,6 +301,6 @@ app.get('/welcome', (req, res) => {
 });
 /*************************************************** */
 
-app.listen(3000, () => {
-  console.log('Server is running on port 3000');
+app.listen(3001, () => {
+  console.log('Server is running on port 3001');
 });

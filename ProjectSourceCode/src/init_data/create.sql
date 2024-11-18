@@ -2,8 +2,7 @@ CREATE TABLE IF NOT EXISTS users (
   id SERIAL PRIMARY KEY,
   username VARCHAR(50) UNIQUE NOT NULL,
   password CHAR(60) NOT NULL,
-  email VARCHAR(50) UNIQUE,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  email VARCHAR(50) UNIQUE
 );
 
 CREATE TABLE IF NOT EXISTS recipes ( -- didn't add location bc format is still unsure
@@ -11,7 +10,7 @@ CREATE TABLE IF NOT EXISTS recipes ( -- didn't add location bc format is still u
   name VARCHAR(100) NOT NULL,
   description VARCHAR(4000),
   instructions TEXT, -- idk if I should use text here. seem to remember we weren't supposed to ?
-  country_id INTEGER,
+  country VARCHAR(100),
   prep_time INTEGER, -- in minutes
   cook_time INTEGER, -- in minutes
   servings INTEGER,
@@ -38,6 +37,11 @@ CREATE TABLE IF NOT EXISTS recipes_ingredients (
   unit varchar(50),
   recipe_id INTEGER,
   ingredient_id INTEGER
+);
+
+CREATE TABLE IF NOT EXISTS countries (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) UNIQUE NOT NULL
 );
 
 -- Adding foreign keys, this should make sure that they are deleted from connected tables too

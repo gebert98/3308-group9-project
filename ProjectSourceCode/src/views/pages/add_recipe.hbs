@@ -1,4 +1,4 @@
-<div>
+<div class="add_recipe">
     <form action="/add_recipe" method="POST">
         <!-- Recipe Title -->
         <div class="form-group">
@@ -6,15 +6,8 @@
             <input type="text" class="form-control" id="title" name="title" required>
         </div>
 
-        <!-- Country -->
-        <div class="form-group">
-            <label for="country_id">Country</label>
-            <select class="form-control" id="country_id" name="country_id" required>
-                {{#each countries}}
-                <option value="{{this.country_id}}">{{this.name}}</option>
-                {{/each}}
-            </select>
-        </div>
+        <!-- Country (Hardcoded to "Test Country") -->
+        <input type="hidden" name="country" value="Test Country">
 
         <!-- Description -->
         <div class="form-group">
@@ -54,6 +47,7 @@
         <div class="form-group">
             <label for="ingredients">Ingredients (comma separated)</label>
             <input type="text" class="form-control" id="ingredients" name="ingredients" placeholder="e.g., 1 cup flour, 2 tbsp sugar">
+            <small class="form-text text-muted">Enter ingredients in the format: quantity unit name (e.g., "1 cup flour").</small>
         </div>
 
         <!-- Submit Button -->

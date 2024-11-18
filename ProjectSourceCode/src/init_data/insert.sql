@@ -24,6 +24,19 @@ INSERT INTO recipes_ingredients (quantity, unit, recipe_id, ingredient_id) VALUE
   (1, 'slice', 1, (SELECT id FROM ingredients WHERE name = 'Cheese')), 
   (2, 'leaves', 2, (SELECT id FROM ingredients WHERE name = 'Lettuce')), -- Vegan Lettuce Wraps
   (1, 'cup', 2, (SELECT id FROM ingredients WHERE name = 'Tomato')), 
-  (1, 'tbsp', 2, (SELECT id FROM ingredients WHERE name = 'Lettuce')); 
+  (1, 'tbsp', 2, (SELECT id FROM ingredients WHERE name = 'Lettuce'));
+
+INSERT INTO countries (name) VALUES
+  ('United States'),
+  ('Italy'),
+  ('Japan'),
+  ('Mexico'),
+  ('France'),
+  ('India'),
+  ('Brazil'),
+  ('China'),
+  ('Spain'),
+  ('Thailand');
+
 
 
