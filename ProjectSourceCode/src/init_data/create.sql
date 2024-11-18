@@ -23,7 +23,8 @@ CREATE TABLE IF NOT EXISTS ingredients (
 
 CREATE TABLE IF NOT EXISTS favorites (
   user_id INTEGER,
-  recipe_id INTEGER
+  recipe_id INTEGER,
+  UNIQUE(user_id, recipe_id)
 );
 
 CREATE TABLE IF NOT EXISTS recipes_ingredients (

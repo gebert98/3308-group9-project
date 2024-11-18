@@ -10,18 +10,15 @@
 <h3>Instructions:</h3>
 <p>{{recipe.instructions}}</p>
 
-<button id="favoriteBtn"
-  {{#if isFavorited}}style="display:none;"{{/if}}
-  onclick="toggleFavorite({{recipe.id}})">
-  Add to Favorites
-</button>
+{{#if logged}}
+<form method="post" action="/favorite">
+  <input type="hidden" name="recipe_id" value={{recipe.id}}>
+  <button type="submit" class="btn btn-success">
+    {{#if favorited}}Saved{{else}}Add to Favorites{{/if}}
+  </button>
+</form>
+{{else}}
+<p><a href="/login">Log in</a> to save this recipe!</p>
+{{/if}}
 
-<span id="favoriteInd"
-  {{#unless isFavorited}}style="display:none;"{{/unless}}
-  <strong>Saved to Favorites!</strong>
-</span>
 
-
-<script>
-
-</script>

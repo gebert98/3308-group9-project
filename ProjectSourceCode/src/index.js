@@ -7,6 +7,7 @@ const pgp = require('pg-promise')();
 const bodyParser = require('body-parser');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
+const axios = require('axios');
 
 // -------------------------------------  APP CONFIG   ----------------------------------------------
 
@@ -158,7 +159,7 @@ app.post('/register', async (req, res) => {
     }
 });
 
-app.get('/home', (req, res) => {
+app.get('/home', (req, res) => { //TODO does this work?
   if (!req.session.user) {
     return res.redirect('/login'); // Redirect to login if not logged in
   }
@@ -262,28 +263,70 @@ app.get('/recipe/:id', async (req, res) => {
     JOIN recipes_ingredients ri ON r.id = ri.recipe_id
     JOIN ingredients i ON ri.ingredient_id = i.id
     WHERE r.id = $1`;
+  const query3 = "SELECT 1 FROM favorites WHERE user_id = $1 AND recipe_id = $2;";
   try{
     const results = await db.any (query1, [id]);
     const ingredients = await db.any(query2, [id]);
+
+    const favorite = await db.any(query3, [req.session.user?req.session.user.id:-1, id]); // terrible way to do this but it works
+    const favorited = (favorite.length > 0) ?true:false;
 
     //console.log(results + "\n" + ingredients);
     if(results.length == 0){
       return res.status(404).send('Error: No such recipe');
     }
 
+    const logged = req.session.user ? true : false;
+
     const recipe = {
+
+      id: results[0].id,
       name: results[0].name,
       description: results[0].description,
       instructions: results[0].instructions,
-      ingredients: ingredients
+      ingredients: ingredients,
     }
     console.log(recipe);
-    res.render('pages/display_recipe', {recipe});
+    res.render('pages/display_recipe', {recipe, logged, favorited});
+    
 
   }
   catch(e) {
     console.error(e);
     res.status(500).send('Database Error');
+  }
+});
+
+//***************************************************
+// favorite or unfavorite recipe
+
+
+app.post('/favorite', async (req, res) => {
+  const recipe_id = req.body.recipe_id
+  try {
+    // This very long query just adds to favorite if it isn't already and removes from favorite if it is
+    const query = `
+      WITH upsert AS (
+        INSERT INTO favorites (user_id, recipe_id)
+        SELECT $1, $2
+        WHERE NOT EXISTS (
+          SELECT 1 FROM favorites WHERE user_id = $1 AND recipe_id = $2
+        )
+        RETURNING *
+      )
+      DELETE FROM favorites
+      WHERE user_id = $1 AND recipe_id = $2 AND NOT EXISTS (SELECT 1 FROM upsert);
+    `;
+    console.log("query starting");
+    await db.query(query, [req.session.user.id, recipe_id]);
+    console.log("query completed");
+    //await axios.get('http://localhost:3000/recipe/'+recipe_id);  
+
+    res.render("pages/display_recipe");
+    //res.status(200).send();
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Database error');
   }
 });
 
