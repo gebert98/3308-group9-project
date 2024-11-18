@@ -251,8 +251,7 @@ app.post('/add_recipe', async (req, res) => {
 // *********************************************************
 // display recipe based on id
 
-app.get('/recipe/:id', async (req, res) => {
-  const id = req.params.id;
+async function recipePage(id, req) {
   const query1 = 'SELECT * FROM recipes WHERE id = $1';
   const query2 = `
     SELECT
@@ -264,32 +263,42 @@ app.get('/recipe/:id', async (req, res) => {
     JOIN ingredients i ON ri.ingredient_id = i.id
     WHERE r.id = $1`;
   const query3 = "SELECT 1 FROM favorites WHERE user_id = $1 AND recipe_id = $2;";
+  const results = await db.any (query1, [id]);
+  const ingredients = await db.any(query2, [id]);
+
+  const favorite = await db.any(query3, [req.session.user?req.session.user.id:-1, id]); // terrible way to do this but it works
+  const favorited = (favorite.length > 0) ?true:false;
+
+  //console.log(results + "\n" + ingredients);
+  if(results.length == 0){
+    return 404;
+  }
+
+  const logged = req.session.user ? true : false;
+
+  const recipe = {
+
+    id: results[0].id,
+    name: results[0].name,
+    description: results[0].description,
+    instructions: results[0].instructions,
+    ingredients: ingredients,
+  }  
+  return [recipe, logged, favorited];
+}
+
+app.get('/recipe/:id', async (req, res) => {
+
   try{
-    const results = await db.any (query1, [id]);
-    const ingredients = await db.any(query2, [id]);
-
-    const favorite = await db.any(query3, [req.session.user?req.session.user.id:-1, id]); // terrible way to do this but it works
-    const favorited = (favorite.length > 0) ?true:false;
-
-    //console.log(results + "\n" + ingredients);
-    if(results.length == 0){
+    const result = await recipePage(req.params.id,req);
+    if(result == 404){
       return res.status(404).send('Error: No such recipe');
     }
-
-    const logged = req.session.user ? true : false;
-
-    const recipe = {
-
-      id: results[0].id,
-      name: results[0].name,
-      description: results[0].description,
-      instructions: results[0].instructions,
-      ingredients: ingredients,
-    }
-    console.log(recipe);
+    const recipe  = result[0];
+    const logged = result[1];
+    const favorited = result[2];
+    console.log(result);
     res.render('pages/display_recipe', {recipe, logged, favorited});
-    
-
   }
   catch(e) {
     console.error(e);
@@ -321,9 +330,15 @@ app.post('/favorite', async (req, res) => {
     await db.query(query, [req.session.user.id, recipe_id]);
     console.log("query completed");
     //await axios.get('http://localhost:3000/recipe/'+recipe_id);  
-
-    res.render("pages/display_recipe");
-    //res.status(200).send();
+    const result = await recipePage(recipe_id, req);
+    if(result == 404){
+      return res.status(404).send('Error: No such recipe');
+    }
+    const recipe  = result[0];
+    const logged = result[1];
+    const favorited = result[2];
+    console.log(result);
+    res.render('pages/display_recipe', {recipe, logged, favorited});
   } catch (err) {
     console.error(err);
     res.status(500).send('Database error');
