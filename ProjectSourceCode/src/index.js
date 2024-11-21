@@ -75,6 +75,9 @@ const dbConfig = {
   database: process.env.POSTGRES_DB,
   user: process.env.POSTGRES_USER,
   password: process.env.POSTGRES_PASSWORD,
+  ssl: {
+    rejectUnauthorized: false, // This is required for Render's SSL connections
+  },
 };
 const db = pgp(dbConfig);
 
