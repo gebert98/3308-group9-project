@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS recipes ( -- didn't add location bc format is still u
 
 CREATE TABLE IF NOT EXISTS ingredients (
   id SERIAL PRIMARY KEY,
-  name VARCHAR(100) NOT NULL,
+  name VARCHAR(100) UNIQUE NOT NULL,
   vegetarian BOOLEAN NOT NULL DEFAULT FALSE,
   vegan BOOLEAN NOT NULL DEFAULT FALSE
 );

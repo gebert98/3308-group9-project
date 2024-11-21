@@ -45,9 +45,16 @@
 
         <!-- Ingredients -->
         <div class="form-group">
-            <label for="ingredients">Ingredients (comma separated)</label>
-            <input type="text" class="form-control" id="ingredients" name="ingredients" placeholder="e.g., 1 cup flour, 2 tbsp sugar">
-            <small class="form-text text-muted">Enter ingredients in the format: quantity unit name (e.g., "1 cup flour").</small>
+            <label for="ingredients">Ingredients</label>
+            <div id="ingredient-inputs">
+                <div class="ingredient-input">
+                    <input type="text" class="form-control" name="ingredient_name[]" placeholder="e.g., flour">
+                    <input type="number" class="form-control" name="ingredient_quantity[]" placeholder="e.g., 1">
+                    <input type="text" class="form-control" name="ingredient_unit[]" placeholder="e.g., cup">
+                </div>
+            </div>
+            <button type="button" id="add-ingredient">Add Ingredient</button>
+            <small class="form-text text-muted">Enter ingredients with quantity, unit, and name (e.g., "1 cup flour").</small>
         </div>
 
         <!-- Submit Button -->
