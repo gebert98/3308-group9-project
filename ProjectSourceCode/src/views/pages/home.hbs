@@ -151,29 +151,29 @@ async function drawBoundaries(globeRadius) {
 }
 
         // Find country based on latitude and longitude using Turf.js
-        function findCountry(lat, lon) {
-            console.log(`Checking point at Latitude: ${lat}, Longitude: ${lon}`);
+    function findCountry(lat, lon) {
+        console.log(`Checking point at Latitude: ${lat}, Longitude: ${lon}`);
 
-            const pt = turf.point([lon, lat]);
+        const pt = turf.point([lon, lat]);
 
-            for (const country of countries) {
-                let polygons = [];
-                if (country.coordinates[0][0] instanceof Array) {
-                    polygons = turf.flatten(turf.multiPolygon(country.coordinates)).features;
-                } else {
-                    polygons = [turf.polygon(country.coordinates)];
-                }
+        for (const country of countries) {
+            let polygons = [];
+            if (country.coordinates[0][0] instanceof Array) {
+                polygons = turf.flatten(turf.multiPolygon(country.coordinates)).features;
+            } else {
+                polygons = [turf.polygon(country.coordinates)];
+            }
 
-                for (const poly of polygons) {
-                    if (turf.booleanPointInPolygon(pt, poly)) {
-                        console.log(`Found country: ${country.name}`);
-                        return country;
-                    }
+            for (const poly of polygons) {
+                if (turf.booleanPointInPolygon(pt, poly)) {
+                    console.log(`Found country: ${country.name}`);
+                    return country;
                 }
             }
-            console.log('No country found at this location');
-            return null;
         }
+        console.log('No country found at this location');
+        return null;
+    }
 
 
         // Click event handler
@@ -191,9 +191,11 @@ async function drawBoundaries(globeRadius) {
             if (intersects.length > 0) {
                 const clickPoint = intersects[0].point;
                 const { lat, lon } = vector3ToLatLon(clickPoint);
-                console.log(`User clicked at Latitude: ${lat}, Longitude: ${lon}`);
+                const shiftedLon = -lon;
+                const shiftedLat = lat + 6.5;
+                console.log(`User clicked at Latitude: ${shiftedLat}, Longitude: ${shiftedLon}`);
 
-                const clickedCountry = findCountry(lat, lon);
+                const clickedCountry = findCountry(shiftedLat, shiftedLon);
                 if (clickedCountry) {
                     alert('You clicked on ' + clickedCountry.name);
                 } else {
