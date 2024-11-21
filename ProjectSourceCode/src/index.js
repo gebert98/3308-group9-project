@@ -11,12 +11,26 @@ const bcrypt = require('bcryptjs');
 // -------------------------------------  APP CONFIG   ----------------------------------------------
 
 // create `ExpressHandlebars` instance and configure the layouts and partials dir.
+
+app.use(express.static('public'));
+
 const hbs = handlebars.create({
   extname: 'hbs',
   layoutsDir: __dirname + '/views/layouts',
   partialsDir: __dirname + '/views/partials',
 });
 
+app.get('/countries', (req, res) => {
+  fs.readFile('./countries.geojson', 'utf8', (err, data) => {
+    if (err) {
+      console.error('Error reading the file:', err);
+      res.status(500).send('Error reading the file');
+      return;
+    }
+    res.header('Content-Type', 'application/json');
+    res.send(data);
+  });
+});
 
 app.get('/home', (req, res) => {
   res.render('pages/home'); // This is correct based on your structure.
