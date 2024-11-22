@@ -1,63 +1,90 @@
-<div class="add_recipe">
-    <form action="/add_recipe" method="POST">
-        <!-- Recipe Title -->
-        <div class="form-group">
-            <label for="title">Recipe Title</label>
-            <input type="text" class="form-control" id="title" name="title" required>
-        </div>
-
-        <!-- Country (Hardcoded to "Test Country") -->
-        <input type="hidden" name="country" value="Test Country">
-
-        <!-- Description -->
-        <div class="form-group">
-            <label for="description">Description</label>
-            <textarea class="form-control" id="description" name="description" rows="4"></textarea>
-        </div>
-
-        <!-- Preparation Time -->
-        <div class="form-group">
-            <label for="prep_time">Preparation Time (minutes)</label>
-            <input type="number" class="form-control" id="prep_time" name="prep_time" min="0">
-        </div>
-
-        <!-- Cook Time -->
-        <div class="form-group">
-            <label for="cook_time">Cook Time (minutes)</label>
-            <input type="number" class="form-control" id="cook_time" name="cook_time" min="0">
-        </div>
-
-        <!-- Servings -->
-        <div class="form-group">
-            <label for="servings">Servings</label>
-            <input type="number" class="form-control" id="servings" name="servings" min="1" required>
-        </div>
-
-        <!-- Difficulty -->
-        <div class="form-group">
-            <label for="difficulty">Difficulty</label>
-            <select class="form-control" id="difficulty" name="difficulty" required>
-                <option value="easy">Easy</option>
-                <option value="moderate">Moderate</option>
-                <option value="hard">Hard</option>
-            </select>
-        </div>
-
-        <!-- Ingredients -->
-        <div class="form-group">
-            <label for="ingredients">Ingredients</label>
-            <div id="ingredient-inputs">
-                <div class="ingredient-input">
-                    <input type="text" class="form-control" name="ingredient_name[]" placeholder="e.g., flour">
-                    <input type="number" class="form-control" name="ingredient_quantity[]" placeholder="e.g., 1">
-                    <input type="text" class="form-control" name="ingredient_unit[]" placeholder="e.g., cup">
-                </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Recipe</title>
+    <link rel="stylesheet" href="/styles.css"> <!-- Optional stylesheet -->
+    <script>
+        // Dynamically add ingredient input rows
+        function addIngredient() {
+            const container = document.getElementById('ingredients-container');
+            const newIngredientRow = `
+                <div class="ingredient-row">
+                    <input type="text" name="ingredient_name[]" placeholder="Ingredient name" required>
+                    <input type="text" name="quantity[]" placeholder="Quantity" required>
+                    <input type="text" name="unit[]" placeholder="Unit (e.g., cups, tbsp)" required>
+                </div>`;
+            container.insertAdjacentHTML('beforeend', newIngredientRow);
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Add a New Recipe</h1>
+        <form action="/add_recipe" method="POST">
+            <!-- Recipe Name -->
+            <div class="form-group">
+                <label for="name">Recipe Name</label>
+                <input type="text" id="name" name="name" class="form-control" required>
             </div>
-            <button type="button" id="add-ingredient">Add Ingredient</button>
-            <small class="form-text text-muted">Enter ingredients with quantity, unit, and name (e.g., "1 cup flour").</small>
-        </div>
 
-        <!-- Submit Button -->
-        <button type="submit" class="btn btn-primary mt-3">Add Recipe</button>
-    </form>
-</div>
+            <!-- Country -->
+            <div class="form-group">
+                <label for="country">Country</label>
+                <input type="text" id="country" name="country" class="form-control">
+            </div>
+
+            <!-- Description -->
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" class="form-control" rows="3"></textarea>
+            </div>
+
+            <!-- Prep Time -->
+            <div class="form-group">
+                <label for="prep_time">Prep Time (minutes)</label>
+                <input type="number" id="prep_time" name="prep_time" class="form-control" min="0">
+            </div>
+
+            <!-- Cook Time -->
+            <div class="form-group">
+                <label for="cook_time">Cook Time (minutes)</label>
+                <input type="number" id="cook_time" name="cook_time" class="form-control" min="0">
+            </div>
+
+            <!-- Servings -->
+            <div class="form-group">
+                <label for="servings">Servings</label>
+                <input type="number" id="servings" name="servings" class="form-control" min="1">
+            </div>
+
+            <!-- Difficulty -->
+            <div class="form-group">
+                <label for="difficulty">Difficulty</label>
+                <select id="difficulty" name="difficulty" class="form-control" required>
+                    <option value="easy">Easy</option>
+                    <option value="moderate">Moderate</option>
+                    <option value="hard">Hard</option>
+                </select>
+            </div>
+
+            <!-- Ingredients -->
+            <div class="form-group">
+                <label>Ingredients</label>
+                <div id="ingredients-container">
+                    <div class="ingredient-row">
+                        <input type="text" name="ingredient_name[]" placeholder="Ingredient name" required>
+                        <input type="text" name="quantity[]" placeholder="Quantity" required>
+                        <input type="text" name="unit[]" placeholder="Unit (e.g., cups, tbsp)" required>
+                    </div>
+                </div>
+                <button type="button" onclick="addIngredient()">Add Another Ingredient</button>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-primary">Add Recipe</button>
+        </form>
+    </div>
+</body>
+</html>

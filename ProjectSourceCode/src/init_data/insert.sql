@@ -2,29 +2,51 @@
 -- THE FOLLOWING IS AI GENERATED FILLER FOR TESTING PURPOSES!
 
 -- Insert sample ingredients
-INSERT INTO ingredients (name, vegetarian, vegan) VALUES
-  ('Tomato', TRUE, TRUE),
-  ('Lettuce', TRUE, TRUE),
-  ('Chicken', FALSE, FALSE),
-  ('Cheese', TRUE, FALSE);
+INSERT INTO ingredients (name) VALUES
+  ('Tomato'),
+  ('Lettuce'),
+  ('Chicken'),
+  ('Cheese');
+
 
 -- Insert sample recipes
-INSERT INTO recipes (name, description, instructions) VALUES
+INSERT INTO recipes (name, description, country, prep_time, cook_time, servings, difficulty) VALUES
   ('Chicken Caesar Salad', 
    'A classic Caesar salad with grilled chicken, lettuce, and Caesar dressing.',
-   '1. Grill the chicken. 2. Toss lettuce with Caesar dressing. 3. Add grilled chicken and cheese.'),
+   'USA',
+   15, -- prep_time in minutes
+   10, -- cook_time in minutes
+   2,  -- servings
+   'moderate'),
   ('Vegan Lettuce Wraps', 
    'Vegan lettuce wraps filled with fresh vegetables and a savory sauce.',
-   '1. Prepare the vegetables. 2. Toss with soy sauce and sesame oil. 3. Wrap in lettuce leaves.');
+   'Thailand',
+   10, -- prep_time
+   0,  -- cook_time
+   4,  -- servings
+   'easy');
+
 
 -- Link recipes to ingredients
 INSERT INTO recipes_ingredients (quantity, unit, recipe_id, ingredient_id) VALUES
-  (1, 'piece', 1, (SELECT id FROM ingredients WHERE name = 'Chicken')), -- Chicken Caesar Salad
-  (2, 'leaves', 1, (SELECT id FROM ingredients WHERE name = 'Lettuce')), 
-  (1, 'slice', 1, (SELECT id FROM ingredients WHERE name = 'Cheese')), 
-  (2, 'leaves', 2, (SELECT id FROM ingredients WHERE name = 'Lettuce')), -- Vegan Lettuce Wraps
-  (1, 'cup', 2, (SELECT id FROM ingredients WHERE name = 'Tomato')), 
-  (1, 'tbsp', 2, (SELECT id FROM ingredients WHERE name = 'Lettuce'));
+  -- Chicken Caesar Salad
+  (1, 'piece', 
+   (SELECT id FROM recipes WHERE name = 'Chicken Caesar Salad'), 
+   (SELECT id FROM ingredients WHERE name = 'Chicken')),
+  (2, 'leaves', 
+   (SELECT id FROM recipes WHERE name = 'Chicken Caesar Salad'), 
+   (SELECT id FROM ingredients WHERE name = 'Lettuce')), 
+  (1, 'slice', 
+   (SELECT id FROM recipes WHERE name = 'Chicken Caesar Salad'), 
+   (SELECT id FROM ingredients WHERE name = 'Cheese')),
+
+  -- Vegan Lettuce Wraps
+  (2, 'leaves', 
+   (SELECT id FROM recipes WHERE name = 'Vegan Lettuce Wraps'), 
+   (SELECT id FROM ingredients WHERE name = 'Lettuce')), 
+  (1, 'cup', 
+   (SELECT id FROM recipes WHERE name = 'Vegan Lettuce Wraps'), 
+   (SELECT id FROM ingredients WHERE name = 'Tomato'));
 
 INSERT INTO countries (name) VALUES
   ('United States'),

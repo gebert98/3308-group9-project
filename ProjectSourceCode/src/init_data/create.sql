@@ -5,14 +5,13 @@ CREATE TABLE IF NOT EXISTS users (
   email VARCHAR(50) UNIQUE
 );
 
-CREATE TABLE IF NOT EXISTS recipes ( -- didn't add location bc format is still unsure
+CREATE TABLE IF NOT EXISTS recipes (
   id SERIAL PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
   description VARCHAR(4000),
-  instructions TEXT, -- idk if I should use text here. seem to remember we weren't supposed to ?
   country VARCHAR(100),
-  prep_time INTEGER, -- in minutes
-  cook_time INTEGER, -- in minutes
+  prep_time INTEGER,
+  cook_time INTEGER,
   servings INTEGER,
   difficulty VARCHAR(20) CHECK (difficulty IN ('easy', 'moderate', 'hard')),
   created_at TIMESTAMP DEFAULT NOW(),
@@ -21,11 +20,8 @@ CREATE TABLE IF NOT EXISTS recipes ( -- didn't add location bc format is still u
 
 CREATE TABLE IF NOT EXISTS ingredients (
   id SERIAL PRIMARY KEY,
-  name VARCHAR(100) UNIQUE NOT NULL,
-  vegetarian BOOLEAN NOT NULL DEFAULT FALSE,
-  vegan BOOLEAN NOT NULL DEFAULT FALSE
+  name VARCHAR(100) UNIQUE NOT NULL
 );
-
 
 CREATE TABLE IF NOT EXISTS favorites (
   user_id INTEGER,
@@ -33,10 +29,10 @@ CREATE TABLE IF NOT EXISTS favorites (
 );
 
 CREATE TABLE IF NOT EXISTS recipes_ingredients (
+  recipe_id INTEGER REFERENCES recipes(id) ON DELETE CASCADE,
+  ingredient_id INTEGER REFERENCES ingredients(id) ON DELETE CASCADE,
   quantity INTEGER,
-  unit varchar(50),
-  recipe_id INTEGER,
-  ingredient_id INTEGER
+  unit VARCHAR(50)
 );
 
 CREATE TABLE IF NOT EXISTS countries (
