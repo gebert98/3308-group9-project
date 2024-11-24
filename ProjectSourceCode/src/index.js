@@ -182,82 +182,94 @@ app.get('/logout', (req, res) => {
 
 //*****************************************************
 app.get('/add-recipe', (req, res) => {
-  const countries = [{ id: 1, name: 'Test Country' }]; // Hardcoded country
-  res.render('pages/add_recipe', { countries });
+  res.render('pages/add_recipe');
 });
 
-router.post('/add_recipe', async (req, res) => {
+app.post('/add_recipe', async (req, res) => {
   const { name, country, description, prep_time, cook_time, servings, difficulty } = req.body;
   const ingredientNames = req.body.ingredient_name;
   const quantities = req.body.quantity;
   const units = req.body.unit;
 
-  let client;
+  console.log('Request Body:', req.body);
+
   try {
-      client = await db.connect();
+    // Start a transaction
+    await db.query('BEGIN');
 
-      // Begin a transaction
-      await client.query('BEGIN');
+    // Insert recipe into `recipes` table
+    const recipeResult = await db.query(
+      `INSERT INTO recipes (name, description, country, prep_time, cook_time, servings, difficulty)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING id`,
+      [name, description, country, prep_time, cook_time, servings, difficulty]
+    );
 
-      // Insert recipe into recipes table
-      const recipeResult = await client.query(
-          `INSERT INTO recipes (name, description, country, prep_time, cook_time, servings, difficulty)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)
-           RETURNING id`,
-          [name, description, country, prep_time, cook_time, servings, difficulty]
-      );
-      const recipeId = recipeResult.rows[0].id;
+    const recipeId = recipeResult[0].id;
+    const numIngredients = ingredientNames.length;
 
-      // Loop through ingredients and process each
-      for (let i = 0; i < ingredientNames.length; i++) {
-          const ingredientName = ingredientNames[i].trim();
-          const quantity = parseInt(quantities[i], 10);
-          const unit = units[i].trim();
+    // Loop through ingredients
+    for (let i = 0; i < numIngredients; i++) {
+      const ingredientName = ingredientNames[i]?.trim();
+      const quantity = quantities[i] ? parseInt(quantities[i], 10) : null;
+      const unit = units[i]?.trim();
 
-          // Insert ingredient if not already present
-          let ingredientResult = await client.query(
-              `INSERT INTO ingredients (name)
-               VALUES ($1)
-               ON CONFLICT (name) DO NOTHING
-               RETURNING id`,
-              [ingredientName]
-          );
-
-          let ingredientId;
-          if (ingredientResult.rows.length > 0) {
-              ingredientId = ingredientResult.rows[0].id;
-          } else {
-              // If the ingredient already exists, retrieve its ID
-              const existingIngredient = await client.query(
-                  `SELECT id FROM ingredients WHERE name = $1`,
-                  [ingredientName]
-              );
-              ingredientId = existingIngredient.rows[0].id;
-          }
-
-          // Insert into recipes_ingredients table
-          await client.query(
-              `INSERT INTO recipes_ingredients (recipe_id, ingredient_id, quantity, unit)
-               VALUES ($1, $2, $3, $4)`,
-              [recipeId, ingredientId, quantity, unit]
-          );
+      if (!ingredientName || !quantity || !unit) {
+        throw new Error(`Invalid data at index ${i}: ingredientName: ${ingredientName}, quantity: ${quantity}, unit: ${unit}`);
       }
 
-      // Commit the transaction
-      await client.query('COMMIT');
-      res.status(200).send('Recipe and ingredients added successfully');
-  } catch (error) {
-      console.error('Error adding recipe:', error);
+      console.log(`Processing ingredient: ${ingredientName}, Quantity: ${quantity}, Unit: ${unit}`);
 
-      // Rollback transaction in case of an error
-      if (client) await client.query('ROLLBACK');
-      res.status(500).send('Failed to add recipe');
-  } finally {
-      if (client) client.release();
+      // Insert or find ingredient in `ingredients` table
+      const ingredientResult = await db.query(
+        `INSERT INTO ingredients (name)
+         VALUES ($1)
+         ON CONFLICT (name) DO NOTHING
+         RETURNING id`,
+        [ingredientName]
+      );
+
+      let ingredientId;
+
+      if (ingredientResult.length > 0) {
+        ingredientId = ingredientResult[0].id;
+      } else {
+        // If no ID is returned, query for the ingredient ID
+        const existingIngredient = await db.query(
+          `SELECT id FROM ingredients WHERE name = $1`,
+          [ingredientName]
+        );
+
+        if (existingIngredient.length === 0) {
+          throw new Error(`Failed to retrieve ingredient ID for ${ingredientName}`);
+        }
+
+        ingredientId = existingIngredient[0].id;
+      }
+
+      // Insert into `recipes_ingredients` table
+      await db.query(
+        `INSERT INTO recipes_ingredients (recipe_id, ingredient_id, quantity, unit)
+         VALUES ($1, $2, $3, $4)`,
+        [recipeId, ingredientId, quantity, unit]
+      );
+    }
+
+    // Commit transaction
+    await db.query('COMMIT');
+    console.log('Transaction committed successfully.');
+    res.redirect('/');
+  } catch (error) {
+    // Rollback transaction on error
+    console.error('Error adding recipe:', error.message, error.stack);
+    await db.query('ROLLBACK');
+    res.status(500).send('Failed to add recipe');
   }
 });
 
-module.exports = router;
+
+
+
 
 /********* Get Recipes For Country *********/
 app.post('/get_recipes', async (req, res) => {
