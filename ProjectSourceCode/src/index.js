@@ -75,9 +75,6 @@ const dbConfig = {
   database: process.env.POSTGRES_DB,
   user: process.env.POSTGRES_USER,
   password: process.env.POSTGRES_PASSWORD,
-  ssl: {
-    rejectUnauthorized: false, // This is required for Render's SSL connections
-  },
 };
 const db = pgp(dbConfig);
 
@@ -260,6 +257,27 @@ app.post('/add_recipe', async (req, res) => {
   } catch (err) {
       console.error(err);
       res.status(500).send('Error adding recipe');
+  }
+});
+
+
+// Get Recipes For Country
+app.get('/recipes/:country', async (req, res) => {
+  const countryName = req.params.country;
+  
+  try {
+    // Fetch recipes for the country
+    const result = await db.query('SELECT * FROM recipes WHERE country = $1', [countryName]);
+    
+    if (result.rows.length > 0) {
+      // Render the page with the recipe data
+      res.render('recipes_list', { country: countryName, recipes: result.rows });
+    } else {
+      res.status(404).send('No recipes found for this country');
+    }
+  } catch (error) {
+    console.error('Error fetching recipes for page:', error);
+    res.status(500).send('Error fetching recipes');
   }
 });
 
