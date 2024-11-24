@@ -199,7 +199,7 @@ app.get('/logout', (req, res) => {
 
 //*****************************************************
 app.get('/add-recipe', (req, res) => {
-  res.render('pages/add_recipe');
+  res.render('views/pages/add_recipe');
 });
 
 app.post('/add_recipe', async (req, res) => {
