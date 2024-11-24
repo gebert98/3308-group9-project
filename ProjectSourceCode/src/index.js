@@ -14,19 +14,6 @@ app.use(express.json());
 
 // create `ExpressHandlebars` instance and configure the layouts and partials dir.
 
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    saveUninitialized: true,
-    resave: true,
-    cookie: {
-      secure: process.env.NODE_ENV === 'production',
-      httpOnly: true,
-      maxAge: 1000 * 60 * 60 * 24, // 1 day
-    },
-  })
-);
-
 app.use(express.static('public'));
 
 const hbs = handlebars.create({
@@ -72,6 +59,14 @@ app.set('view engine', 'hbs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(bodyParser.json());
 
+
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    saveUninitialized: true,
+    resave: true,
+  })
+);
 
 app.use(
   bodyParser.urlencoded({
