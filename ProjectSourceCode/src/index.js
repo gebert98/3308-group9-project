@@ -7,13 +7,25 @@ const pgp = require('pg-promise')();
 const bodyParser = require('body-parser');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
-const router = express.Router();
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 // -------------------------------------  APP CONFIG   ----------------------------------------------
 
 // create `ExpressHandlebars` instance and configure the layouts and partials dir.
+
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    saveUninitialized: true,
+    resave: true,
+    cookie: {
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+      maxAge: 1000 * 60 * 60 * 24, // 1 day
+    },
+  })
+);
 
 app.use(express.static('public'));
 
@@ -49,6 +61,10 @@ app.get('/login', (req, res) => {
   res.render('pages/login',{});
 });
 
+app.get('/add-recipe', (req, res) => {
+  res.render('pages/add_recipe');
+});
+
 
 // Register `hbs` as our view engine using its bound `engine()` function.
 app.engine('hbs', hbs.engine);
@@ -56,14 +72,6 @@ app.set('view engine', 'hbs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(bodyParser.json());
 
-
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    saveUninitialized: true,
-    resave: true,
-  })
-);
 
 app.use(
   bodyParser.urlencoded({
@@ -198,9 +206,6 @@ app.get('/logout', (req, res) => {
 });
 
 //*****************************************************
-app.get('/add-recipe', (req, res) => {
-  res.render('views/pages/add_recipe');
-});
 
 app.post('/add_recipe', async (req, res) => {
   const { name, country, description, prep_time, cook_time, servings, difficulty } = req.body;
