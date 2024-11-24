@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rotating Globe</title>
+    <title>Interactive Rotating Globe</title>
     <style>
         body { margin: 0; }
         canvas { display: block; }
@@ -20,26 +19,34 @@
     }
     </script>
 
-    <!-- Your main script using imports -->
+    <!-- Include Turf.js for spatial analysis -->
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+
+    <!-- Main script -->
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
+        // Globals
+        let countries = [];
+        const mouse = new THREE.Vector2();
+        const raycaster = new THREE.Raycaster();
+
         // Set up the scene, camera, and renderer
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer();
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
         // Add ambient light
-        const light = new THREE.AmbientLight(0xffffff, 1); // White light with full intensity
+        const light = new THREE.AmbientLight(0xffffff, 1);
         scene.add(light);
 
         // Add a sphere geometry for the globe
-        const geometry = new THREE.SphereGeometry(5, 32, 32);
+        const geometry = new THREE.SphereGeometry(5, 64, 64);
         const textureLoader = new THREE.TextureLoader();
-        const texture = textureLoader.load('https://cdna.artstation.com/p/marketplace/presentation_assets/000/374/630/large/file.jpg?1589438924'); // Replace with a valid URL
+        const texture = textureLoader.load('https://assets-global.website-files.com/62eb870036357a73104e20ad/62ff338f7c1a4277f9232e5f_PlanetSAT_2022_World_Web.jpg'); // Replace with a valid URL
         const material = new THREE.MeshBasicMaterial({ map: texture });
         const globe = new THREE.Mesh(geometry, material);
         scene.add(globe);
@@ -49,12 +56,13 @@
 
         // Add OrbitControls for interaction
         const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
 
         // Animation loop
         function animate() {
             requestAnimationFrame(animate);
-            globe.rotation.y += 0.001; // Adjust rotation speed if needed
-            controls.update(); // Required if controls.enableDamping = true, or controls.auto-rotation
+            globe.rotation.y += 0;
+            controls.update();
             renderer.render(scene, camera);
         }
         animate();
@@ -65,9 +73,148 @@
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
+
+        // Convert latitude and longitude to Vector3
+        function latLonToVector3(lat, lon, radius) {
+            const phi = (90 - lat) * (Math.PI / 180);
+            const theta = (lon + 180) * (Math.PI / 180);
+
+            const x = -radius * Math.sin(phi) * Math.cos(theta);
+            const z = radius * Math.sin(phi) * Math.sin(theta);
+            const y = radius * Math.cos(phi);
+
+            return new THREE.Vector3(x, y, z);
+        }
+
+        // Convert Vector3 to latitude and longitude
+        function vector3ToLatLon(point) {
+            const radius = point.length();
+            const lat = 90 - (Math.acos(point.y / radius) * 180 / Math.PI);
+            const lon = ((Math.atan2(point.z, point.x) * 180 / Math.PI) + 180) % 360 - 180;
+            return { lat, lon };
+        }
+// Helper function to shift longitudes to the opposite side of the map
+function shiftLongitude(lon) {
+    // Shift longitude by 90 degrees (you can adjust the direction based on your preference)
+    return lon + 0; // Or lon - 90 to shift in the opposite direction
+}
+
+
+async function drawBoundaries(globeRadius) {
+    try {
+        // Fetch GeoJSON data (replace with your source)
+        const response = await fetch('/countries.geojson');
+        if (!response.ok) {
+            console.error('Failed to load GeoJSON data.');
+            return;
+        }
+        const geoJsonData = await response.json();
+
+        const lineMaterial = new THREE.LineBasicMaterial({ color: 0xff0000 });
+        countries = []; // Reset countries array
+
+        geoJsonData.features.forEach(feature => {
+            const countryName = feature.properties.NAME || feature.properties.name || feature.properties.ADMIN;
+            const geometry = feature.geometry;
+
+            if (geometry.type === 'Polygon' || geometry.type === 'MultiPolygon') {
+                const coordinates = geometry.coordinates;
+                const polygons = geometry.type === 'Polygon' ? [coordinates] : coordinates;
+
+                polygons.forEach(polygon => {
+                    polygon.forEach(ring => {
+                        const vertices = [];
+                        ring.forEach(([lon, lat]) => {
+                            // Shift longitude before converting to 3D vector
+                            const shiftedLon = shiftLongitude(lon);
+                            const vertex = latLonToVector3(lat, shiftedLon, globeRadius);
+                            vertices.push(vertex.x, vertex.y, vertex.z);
+                        });
+
+                        const geometry = new THREE.BufferGeometry();
+                        geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+
+                        const line = new THREE.Line(geometry, lineMaterial);
+                        scene.add(line);
+                    });
+                });
+
+                // Store the country for click detection
+                countries.push({ name: countryName, coordinates: geometry.type === 'Polygon' ? [coordinates] : coordinates });
+            }
+        });
+
+        console.log('Countries loaded:', countries);
+    } catch (error) {
+        console.error('Error loading GeoJSON:', error);
+    }
+}
+
+        // Find country based on latitude and longitude using Turf.js
+    function findCountry(lat, lon) {
+        console.log(`Checking point at Latitude: ${lat}, Longitude: ${lon}`);
+
+        const pt = turf.point([lon, lat]);
+
+        for (const country of countries) {
+            let polygons = [];
+            if (country.coordinates[0][0] instanceof Array) {
+                polygons = turf.flatten(turf.multiPolygon(country.coordinates)).features;
+            } else {
+                polygons = [turf.polygon(country.coordinates)];
+            }
+
+            for (const poly of polygons) {
+                if (turf.booleanPointInPolygon(pt, poly)) {
+                    console.log(`Found country: ${country.name}`);
+                    return country;
+                }
+            }
+        }
+        console.log('No country found at this location');
+        return null;
+    }
+
+
+        // Click event handler
+        function onClick(event) {
+            if (countries.length === 0) {
+                console.warn('Countries data not loaded yet.');
+                return;
+            }
+
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+
+            const intersects = raycaster.intersectObject(globe);
+            if (intersects.length > 0) {
+                const clickPoint = intersects[0].point;
+                const { lat, lon } = vector3ToLatLon(clickPoint);
+                const shiftedLon = -lon;
+                const shiftedLat = lat + 6.5;
+                console.log(`User clicked at Latitude: ${shiftedLat}, Longitude: ${shiftedLon}`);
+
+                const clickedCountry = findCountry(shiftedLat, shiftedLon);
+                if (clickedCountry) {
+                    alert('You clicked on ' + clickedCountry.name);
+                } else {
+                    alert('No country found at this location.');
+                }
+            }
+        }
+
+        // Fetch country data and draw boundaries, then add event listener
+drawBoundaries(5).then(() => {
+    if (countries.length > 0) {
+        window.addEventListener('click', onClick);
+    } else {
+        console.error('Countries data not loaded or empty.');
+    }
+});
+
     </script>
 </head>
 <body>
 </body>
 </html>
-
