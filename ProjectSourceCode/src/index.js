@@ -275,7 +275,7 @@ app.post('/add_recipe', async (req, res) => {
     // Commit transaction
     await db.query('COMMIT');
     console.log('Transaction committed successfully.');
-    res.redirect('/');
+    res.redirect('/home');
   } catch (error) {
     // Rollback transaction on error
     console.error('Error adding recipe:', error.message, error.stack);
