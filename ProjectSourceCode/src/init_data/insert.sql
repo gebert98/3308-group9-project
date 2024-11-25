@@ -9,7 +9,7 @@ INSERT INTO ingredients (name) VALUES
 INSERT INTO recipes (name, description, country, prep_time, cook_time, servings, difficulty) VALUES
   ('Chicken Caesar Salad', 
    'A classic Caesar salad with grilled chicken, lettuce, and Caesar dressing.',
-   'USA',
+   'United States of America',
    15, -- prep_time in minutes
    10, -- cook_time in minutes
    2,  -- servings
