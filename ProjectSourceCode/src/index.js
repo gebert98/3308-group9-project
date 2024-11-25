@@ -48,10 +48,6 @@ app.get('/login', (req, res) => {
   res.render('pages/login',{});
 });
 
-app.get('/add-recipe', (req, res) => {
-  res.render('pages/add_recipe');
-});
-
 
 // Register `hbs` as our view engine using its bound `engine()` function.
 app.engine('hbs', hbs.engine);
