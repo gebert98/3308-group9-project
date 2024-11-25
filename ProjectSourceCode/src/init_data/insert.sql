@@ -40,6 +40,29 @@ INSERT INTO recipes_ingredients (quantity, unit, recipe_id, ingredient_id) VALUE
    (SELECT id FROM recipes WHERE name = 'Chicken Caesar Salad'), 
    (SELECT id FROM ingredients WHERE name = 'Cheese')),
 
+
+  -- Vegan Lettuce Wraps
+  (2, 'leaves', 
+   (SELECT id FROM recipes WHERE name = 'Vegan Lettuce Wraps'), 
+   (SELECT id FROM ingredients WHERE name = 'Lettuce')), 
+  (1, 'cup', 
+   (SELECT id FROM recipes WHERE name = 'Vegan Lettuce Wraps'), 
+   (SELECT id FROM ingredients WHERE name = 'Tomato'));
+
+INSERT INTO countries (name) VALUES
+  ('United States'),
+  ('Italy'),
+  ('Japan'),
+  ('Mexico'),
+  ('France'),
+  ('India'),
+  ('Brazil'),
+  ('China'),
+  ('Spain'),
+  ('Thailand');
+
+
+
   -- Vegan Lettuce Wraps
   (2, 'leaves', 
    (SELECT id FROM recipes WHERE name = 'Vegan Lettuce Wraps'), 

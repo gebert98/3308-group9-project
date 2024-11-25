@@ -7,6 +7,8 @@ const pgp = require('pg-promise')();
 const bodyParser = require('body-parser');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 
 // -------------------------------------  APP CONFIG   ----------------------------------------------
 
@@ -44,6 +46,10 @@ app.get('/register', (req, res) => {
 });
 app.get('/login', (req, res) => {
   res.render('pages/login',{});
+});
+
+app.get('/add-recipe', (req, res) => {
+  res.render('pages/add_recipe');
 });
 
 
@@ -190,7 +196,9 @@ app.get('/logout', (req, res) => {
     res.redirect('/login');
   });
 });
+
 //*****************************************************
+
 app.get('/add-recipe', (req, res) => {
   const country = req.query.country || ''; // Get country from query, default to empty
   res.render('pages/add_recipe', { country });
@@ -279,6 +287,40 @@ app.post('/add_recipe', async (req, res) => {
 });
 
 
+
+
+
+/********* Get Recipes For Country *********/
+app.post('/get_recipes', async (req, res) => {
+  // Extract country from the request body
+  const { country } = req.body;
+  
+  // If the country is not provided, return a bad request response
+  if (!country) {
+    return res.status(400).json({ error: "Country is required" });
+  }
+
+  try {
+    // Query to get all recipes for the specified country
+    const result = await db.query(
+      'SELECT * FROM recipes WHERE country = $1;',
+      [country]
+    );
+
+    // If no recipes are found, return an empty array
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: `No recipes found for country: ${country}` });
+    }
+
+    // Return the recipes found
+    res.status(200).json(result.rows);
+  } catch (error) {
+    console.error("Error fetching recipes:", error);
+    res.status(500).json({ error: "An error occurred while fetching recipes" });
+  }
+});
+
+
 // Get Recipes For Country
 app.get('/recipes/:country', async (req, res) => {
   const { country } = req.params;
@@ -308,6 +350,6 @@ app.get('/welcome', (req, res) => {
 });
 /*************************************************** */
 
+
 module.exports = app.listen(3000, () => {
-  console.log('Server is running on port 3000');
-});
+  console.log('Server is running on port 3000')});
