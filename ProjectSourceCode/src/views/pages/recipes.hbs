@@ -1,0 +1,35 @@
+<div class="container my-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="text-center">Recipes from {{country}}</h1>
+    <a href="/add-recipe?country={{country}}" class="btn btn-success">Add Recipe</a>
+  </div>
+
+  {{#if recipes.length}}
+    <div class="row">
+      {{#each recipes}}
+        <div class="col-md-4 mb-4">
+          <div class="card h-100 shadow-sm">
+            <div class="card-body">
+              <h5 class="card-title">{{name}}</h5>
+              <p class="card-text">
+                {{#if description}}
+                  {{description}}
+                {{else}}
+                  No description available.
+                {{/if}}
+              </p>
+              <p class="card-text">
+                <small class="text-muted">Prep Time: {{prep_time}} minutes</small>
+              </p>
+            </div>
+            <div class="card-footer text-center">
+              <a href="/recipe/{{id}}" class="btn btn-primary">View Recipe</a>
+            </div>
+          </div>
+        </div>
+      {{/each}}
+    </div>
+  {{else}}
+    <p class="text-center">No recipes found for {{country}}.</p>
+  {{/if}}
+</div>
