@@ -46,4 +46,3 @@ ALTER TABLE favorites ADD FOREIGN KEY (recipe_id) REFERENCES recipes (id) ON DEL
 
 ALTER TABLE recipes_ingredients ADD FOREIGN KEY (recipe_id) REFERENCES recipes (id) ON DELETE CASCADE;
 ALTER TABLE recipes_ingredients ADD FOREIGN KEY (ingredient_id) REFERENCES ingredients (id) ON DELETE CASCADE;
-

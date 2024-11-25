@@ -15,6 +15,7 @@
     <div class="container">
         <h1>Add a New Recipe</h1>
         <form action="/add_recipe" method="POST">
+
             <!-- Recipe Name -->
             <div class="form-group">
                 <label for="name">Recipe Name</label>
@@ -24,7 +25,18 @@
             <!-- Country -->
             <div class="form-group">
                 <label for="country">Country</label>
+
+                    <input
+                    type="text"
+                    id="country"
+                    name="country"
+                    class="form-control"
+                    value="{{country}}" <!-- Pre-fill country -->
+                    readonly
+                    >
+
                 <input type="text" id="country" name="country" class="form-control">
+
             </div>
 
             <!-- Description -->
@@ -80,3 +92,4 @@
     </div>
 </body>
 </html>
+

@@ -81,9 +81,6 @@ const dbConfig = {
   database: process.env.POSTGRES_DB,
   user: process.env.POSTGRES_USER,
   password: process.env.POSTGRES_PASSWORD,
-  ssl: {
-    rejectUnauthorized: false, // This is required for Render's SSL connections
-  },
 };
 const db = pgp(dbConfig);
 
@@ -202,6 +199,11 @@ app.get('/logout', (req, res) => {
 
 //*****************************************************
 
+app.get('/add-recipe', (req, res) => {
+  const country = req.query.country || ''; // Get country from query, default to empty
+  res.render('pages/add_recipe', { country });
+});
+
 app.post('/add_recipe', async (req, res) => {
   const { name, country, description, prep_time, cook_time, servings, difficulty } = req.body;
   const ingredientNames = req.body.ingredient_name;
@@ -317,6 +319,30 @@ app.post('/get_recipes', async (req, res) => {
     res.status(500).json({ error: "An error occurred while fetching recipes" });
   }
 });
+
+
+// Get Recipes For Country
+app.get('/recipes/:country', async (req, res) => {
+  const { country } = req.params;
+
+  try {
+    const recipes = await db.query(
+      'SELECT * FROM recipes WHERE LOWER(country) = LOWER($1)',
+      [country]
+    );
+
+    // Send a 200 response with the page regardless of whether recipes are found
+    res.status(200).render('pages/recipes', {
+      country,
+      recipes: recipes || [] // Default to an empty array if no recipes
+    });
+  } catch (error) {
+    console.error('Error fetching recipes:', error);
+    res.status(500).send('Failed to load recipes');
+  }
+});
+
+
 
 // For example test *********************************/ 
 app.get('/welcome', (req, res) => {

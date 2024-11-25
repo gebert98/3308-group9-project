@@ -197,7 +197,29 @@ async function drawBoundaries(globeRadius) {
 
                 const clickedCountry = findCountry(shiftedLat, shiftedLon);
                 if (clickedCountry) {
-                    alert('You clicked on ' + clickedCountry.name);
+                    const countryName = clickedCountry.name;
+    
+                    // Make a GET request to fetch recipes for the clicked country
+                     fetch(`/recipes/${encodeURIComponent(countryName)}`)
+                        .then(async response => {
+                            console.log(`Response status: ${response.status}`);
+
+                            if (response.ok || response.status === 404) {
+                            // Navigate to the recipes page
+                            window.location.href = `/recipes/${encodeURIComponent(countryName)}`;
+                            } else {
+                            // Log error details for further inspection
+                            const errorText = await response.text();
+                            console.error('Error response text:', errorText);
+                            alert('Failed to fetch recipes for ' + countryName);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Fetch error:', error);
+                            alert('Error fetching recipes: ' + error.message);
+                        });
+
+
                 } else {
                     alert('No country found at this location.');
                 }
