@@ -200,18 +200,20 @@ async function drawBoundaries(globeRadius) {
                     const countryName = clickedCountry.name;
     
                     // Make a GET request to fetch recipes for the clicked country
-                    fetch(`/get_recipes/${encodeURIComponent(countryName)}`)
+                    fetch(`/recipes/${encodeURIComponent(countryName)}`)
                         .then(response => {
-                            if (response.ok) {
-                                // Redirect to the page with the recipes if the request is successful
-                                window.location.href = `/recipes/${encodeURIComponent(countryName)}`;
+                            if (response.status === 404) {
+                            alert('No recipes found for ' + countryName);
+                            } else if (response.ok) {
+                            window.location.href = `/recipes/${encodeURIComponent(countryName)}`;
                             } else {
-                                alert('Failed to fetch recipes for ' + countryName);
+                            alert('Failed to fetch recipes for ' + countryName);
                             }
                         })
                         .catch(error => {
+                            console.error('Fetch error:', error);
                             alert('Error fetching recipes: ' + error.message);
-                    });
+                        });
                 } else {
                     alert('No country found at this location.');
                 }

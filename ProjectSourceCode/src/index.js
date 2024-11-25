@@ -196,67 +196,84 @@ app.get('/add-recipe',(req, res) => {
 });
 
 app.post('/add_recipe', async (req, res) => {
+  const { name, country, description, prep_time, cook_time, servings, difficulty } = req.body;
+  const ingredientNames = req.body.ingredient_name;
+  const quantities = req.body.quantity;
+  const units = req.body.unit;
+
+  console.log('Request Body:', req.body);
+
   try {
-      const {
-          title,
-          country_id,
-          description,
-          prep_time,
-          cook_time,
-          servings,
-          difficulty,
-          ingredients
-      } = req.body;
+    // Start a transaction
+    await db.query('BEGIN');
 
-      // Step 1: Insert the recipe into the `recipes` table
-      const recipeResult = await pool.query(
-          `INSERT INTO recipes (name, country_id, description, prep_time, cook_time, servings, difficulty)
-          VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
-          [title, country_id, description, prep_time, cook_time, servings, difficulty]
-      );
-      const recipeId = recipeResult.rows[0].id;
+    // Insert recipe into `recipes` table
+    const recipeResult = await db.query(
+      `INSERT INTO recipes (name, description, country, prep_time, cook_time, servings, difficulty)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING id`,
+      [name, description, country, prep_time, cook_time, servings, difficulty]
+    );
 
-      // Step 2: Insert ingredients into the `recipes_ingredients` table
-      if (ingredients) {
-          const ingredientsArray = ingredients.split(',').map(ingredient => ingredient.trim());
-          
-          for (let ingredient of ingredientsArray) {
-              // Assuming ingredient has a format like "1 cup flour"
-              const [quantity, unit, ...nameParts] = ingredient.split(' ');
-              const name = nameParts.join(' ');
+    const recipeId = recipeResult[0].id;
+    const numIngredients = ingredientNames.length;
 
-              // Check if the ingredient already exists in the `ingredients` table
-              let ingredientResult = await pool.query(
-                  `SELECT id FROM ingredients WHERE name = $1`,
-                  [name]
-              );
+    // Loop through ingredients
+    for (let i = 0; i < numIngredients; i++) {
+      const ingredientName = ingredientNames[i]?.trim();
+      const quantity = quantities[i] ? parseInt(quantities[i], 10) : null;
+      const unit = units[i]?.trim();
 
-              let ingredientId;
-              if (ingredientResult.rows.length > 0) {
-                  ingredientId = ingredientResult.rows[0].id;
-              } else {
-                  // If not found, insert the new ingredient
-                  const newIngredientResult = await pool.query(
-                      `INSERT INTO ingredients (name) VALUES ($1) RETURNING id`,
-                      [name]
-                  );
-                  ingredientId = newIngredientResult.rows[0].id;
-              }
-
-              // Insert into the `recipes_ingredients` table
-              await pool.query(
-                  `INSERT INTO recipes_ingredients (recipe_id, ingredient_id, quantity, unit)
-                  VALUES ($1, $2, $3, $4)`,
-                  [recipeId, ingredientId, quantity || null, unit || null]
-              );
-          }
+      if (!ingredientName || !quantity || !unit) {
+        throw new Error(`Invalid data at index ${i}: ingredientName: ${ingredientName}, quantity: ${quantity}, unit: ${unit}`);
       }
 
-      // Redirect or send a success response
-      res.redirect('/recipes');
-  } catch (err) {
-      console.error(err);
-      res.status(500).send('Error adding recipe');
+      console.log(`Processing ingredient: ${ingredientName}, Quantity: ${quantity}, Unit: ${unit}`);
+
+      // Insert or find ingredient in `ingredients` table
+      const ingredientResult = await db.query(
+        `INSERT INTO ingredients (name)
+         VALUES ($1)
+         ON CONFLICT (name) DO NOTHING
+         RETURNING id`,
+        [ingredientName]
+      );
+
+      let ingredientId;
+
+      if (ingredientResult.length > 0) {
+        ingredientId = ingredientResult[0].id;
+      } else {
+        // If no ID is returned, query for the ingredient ID
+        const existingIngredient = await db.query(
+          `SELECT id FROM ingredients WHERE name = $1`,
+          [ingredientName]
+        );
+
+        if (existingIngredient.length === 0) {
+          throw new Error(`Failed to retrieve ingredient ID for ${ingredientName}`);
+        }
+
+        ingredientId = existingIngredient[0].id;
+      }
+
+      // Insert into `recipes_ingredients` table
+      await db.query(
+        `INSERT INTO recipes_ingredients (recipe_id, ingredient_id, quantity, unit)
+         VALUES ($1, $2, $3, $4)`,
+        [recipeId, ingredientId, quantity, unit]
+      );
+    }
+
+    // Commit transaction
+    await db.query('COMMIT');
+    console.log('Transaction committed successfully.');
+    res.redirect('/home');
+  } catch (error) {
+    // Rollback transaction on error
+    console.error('Error adding recipe:', error.message, error.stack);
+    await db.query('ROLLBACK');
+    res.status(500).send('Failed to add recipe');
   }
 });
 
@@ -264,14 +281,13 @@ app.post('/add_recipe', async (req, res) => {
 // Get Recipes For Country
 app.get('/recipes/:country', async (req, res) => {
   const countryName = req.params.country;
-  
+
   try {
-    // Fetch recipes for the country
-    const result = await db.query('SELECT * FROM recipes WHERE country = $1', [countryName]);
-    
-    if (result.rows.length > 0) {
-      // Render the page with the recipe data
-      res.render('recipes_list', { country: countryName, recipes: result.rows });
+    console.log('Fetching recipes for:', countryName); // Debugging
+    const result = await db.query('SELECT * FROM recipes WHERE LOWER(country) = LOWER($1)', [countryName]);
+
+    if (result.length > 0) {
+      res.render('pages/recipes', { country: countryName, recipes: result });
     } else {
       res.status(404).send('No recipes found for this country');
     }
