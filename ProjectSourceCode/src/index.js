@@ -255,7 +255,6 @@ app.post('/add_recipe', async (req, res) => {
         throw new Error(`Invalid data at index ${i}: ingredientName: ${ingredientName}, quantity: ${quantity}, unit: ${unit}`);
       }
 
-      console.log(`Processing ingredient: ${ingredientName}, Quantity: ${quantity}, Unit: ${unit}`);
 
       // Insert or find ingredient in `ingredients` table
       const ingredientResult = await db.query(
@@ -294,11 +293,10 @@ app.post('/add_recipe', async (req, res) => {
 
     // Commit transaction
     await db.query('COMMIT');
-    console.log('Transaction committed successfully.');
     res.redirect('/');
   } catch (error) {
     // Rollback transaction on error
-    console.error('Error adding recipe:', error.message, error.stack);
+    
     await db.query('ROLLBACK');
     res.status(500).send('Failed to add recipe');
   }
