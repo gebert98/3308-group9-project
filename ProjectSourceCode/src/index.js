@@ -48,6 +48,11 @@ app.get('/login', (req, res) => {
   res.render('pages/login',{});
 });
 
+// Get add recipe page for clicked on country:
+app.get('/add-recipe', (req, res) => {
+  const country = req.query.country || ''; // Get country from query, default to empty
+  res.render('pages/add_recipe', { country });
+});
 
 // Get Recipes For Country
 app.get('/recipes/:country', async (req, res) => {
@@ -158,42 +163,42 @@ app.post('/register', async (req, res) => {
 
 
 
-  app.post('/login', async (req, res) => {
-    const username = req.body.username;
-    const password = req.body.password;
+app.post('/login', async (req, res) => {
+  const username = req.body.username;
+  const password = req.body.password;
 
-    try {
-        
-        const result = await db.query(
-            'SELECT * FROM users WHERE username = $1;',
-            [username]
-        );
+  try {
+      
+      const result = await db.query(
+          'SELECT * FROM users WHERE username = $1;',
+          [username]
+      );
 
-        if (result.length === 0) {
-            console.log('User not found');
-            return res.redirect('/register'); // Redirect to registration if user not found
-        }
+      if (result.length === 0) {
+          console.log('User not found');
+          return res.redirect('/register'); // Redirect to registration if user not found
+      }
 
-        const user = result[0];
+      const user = result[0];
 
-        const match = await bcrypt.compare(password, user.password);
+      const match = await bcrypt.compare(password, user.password);
 
-        if (!match) {
-            console.log('Invalid password');
-            return res.status(400).render('pages/login', { message: 'Invalid password' });
-        }
+      if (!match) {
+          console.log('Invalid password');
+          return res.status(400).render('pages/login', { message: 'Invalid password' });
+      }
 
-        req.session.user = user;
+      req.session.user = user;
 
-        req.session.save(() => {
+      req.session.save(() => {
 
-            res.redirect('/home');
-        });
+          res.redirect('/home');
+      });
 
-    } catch (error) {
-        console.error("Error during login:", error);
-        res.status(500).send('Error during login');
-    }
+  } catch (error) {
+      console.error("Error during login:", error);
+      res.status(500).send('Error during login');
+  }
 });
 
 app.get('/home', (req, res) => {
@@ -216,11 +221,6 @@ app.get('/logout', (req, res) => {
 });
 
 //*****************************************************
-
-app.get('/add-recipe', (req, res) => {
-  const country = req.query.country || ''; // Get country from query, default to empty
-  res.render('pages/add_recipe', { country });
-});
 
 app.post('/add_recipe', async (req, res) => {
   const { name, country, description, prep_time, cook_time, servings, difficulty } = req.body;
