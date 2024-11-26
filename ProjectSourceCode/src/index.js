@@ -7,30 +7,23 @@ const pgp = require('pg-promise')();
 const bodyParser = require('body-parser');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
 
 // -------------------------------------  APP CONFIG   ----------------------------------------------
 
+// Body parsers
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+app.use(bodyParser.json());  // Only one body parser is needed, combine them
+app.use(
+  bodyParser.urlencoded({
+    extended: true,
+  })
+);
 
-
-// create `ExpressHandlebars` instance and configure the layouts and partials dir.
-
+// Static files (CSS, JS, images)
 app.use(express.static('public'));
 
-const hbs = handlebars.create({
-  extname: 'hbs',
-  layoutsDir: __dirname + '/views/layouts',
-  partialsDir: __dirname + '/views/partials',
-});
-
-// Register `hbs` as our view engine using its bound `engine()` function.
-app.engine('hbs', hbs.engine);
-app.set('view engine', 'hbs');
-app.set('views', path.join(__dirname, 'views'));
-app.use(bodyParser.json());
-
-
+// Session configuration
 app.use(
   session({
     secret: process.env.SESSION_SECRET,
@@ -39,13 +32,9 @@ app.use(
   })
 );
 
-app.use(
-  bodyParser.urlencoded({
-    extended: true,
-  })
-);
 
 // -------------------------------------  DB CONFIG AND CONNECT   ---------------------------------------
+
 const dbConfig = {
   host: process.env.POSTGRES_HOST,
   port: 5432,
@@ -53,32 +42,42 @@ const dbConfig = {
   user: process.env.POSTGRES_USER,
   password: process.env.POSTGRES_PASSWORD,
 };
+
 const db = pgp(dbConfig);
 
-// function to retry db connection because somtimes it takes too long
-// (only needed for when the db and node are starting at the same time)
+// Function to retry DB connection
 const waitForDatabase = async (retries = 3, interval = 3000) => {
   while (retries > 0) {
     try {
-      // try connecting to db
       await db.connect();
       console.log('Database connection successful');
-      return; // it worked so return
+      return;
     } catch (error) {
       console.log('Database not ready, retrying...', retries);
       retries--;
-      await new Promise(r => setTimeout(r, interval)); // wait for `interval` ms before retryin
+      await new Promise(r => setTimeout(r, interval)); // Wait before retry
     }
   }
   console.log('Failed to connect to the database after multiple attempts.');
-  process.exit(1); // exit if the db dosn't start
+  process.exit(1); // Exit if DB connection fails after retries
 };
 
+waitForDatabase();  // Wait for DB before starting the server
 
-// db test
-waitForDatabase();
+// ------------------------------------- HANDLEBARS CONFIGURATION --------------------------------------------
 
-/* ------------------------------------------------------ */
+const hbs = handlebars.create({
+  extname: 'hbs',
+  layoutsDir: __dirname + '/views/layouts',
+  partialsDir: __dirname + '/views/partials',
+});
+
+app.engine('hbs', hbs.engine);
+app.set('view engine', 'hbs');
+app.set('views', path.join(__dirname, 'views'));
+
+
+// ------------------------------------- ROUTES AND HANDLERS --------------------------------------------
 
 app.get('/countries', (req, res) => {
   fs.readFile('./countries.geojson', 'utf8', (err, data) => {
