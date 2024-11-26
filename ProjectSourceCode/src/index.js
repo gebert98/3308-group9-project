@@ -12,6 +12,8 @@ app.use(express.json());
 
 // -------------------------------------  APP CONFIG   ----------------------------------------------
 
+
+
 // create `ExpressHandlebars` instance and configure the layouts and partials dir.
 
 app.use(express.static('public'));
@@ -21,60 +23,6 @@ const hbs = handlebars.create({
   layoutsDir: __dirname + '/views/layouts',
   partialsDir: __dirname + '/views/partials',
 });
-
-app.get('/countries', (req, res) => {
-  fs.readFile('./countries.geojson', 'utf8', (err, data) => {
-    if (err) {
-      console.error('Error reading the file:', err);
-      res.status(500).send('Error reading the file');
-      return;
-    }
-    res.header('Content-Type', 'application/json');
-    res.send(data);
-  });
-});
-
-app.get('/home', (req, res) => {
-  res.render('pages/home'); // This is correct based on your structure.
-});
-
-app.get('/', (req, res) => {
-  res.redirect('/home'); 
-});
-app.get('/register', (req, res) => {
-  res.render('pages/register'); // This is correct based on your structure.
-});
-app.get('/login', (req, res) => {
-  res.render('pages/login',{});
-});
-
-// Get add recipe page for clicked on country:
-app.get('/add-recipe', (req, res) => {
-  const country = req.query.country || ''; // Get country from query, default to empty
-  res.render('pages/add_recipe', { country });
-});
-
-// Get Recipes For Country
-app.get('/recipes/:country', async (req, res) => {
-  const { country } = req.params;
-
-  try {
-    const recipes = await db.query(
-      'SELECT * FROM recipes WHERE LOWER(country) = LOWER($1)',
-      [country]
-    );
-
-    // Send a 200 response with the page regardless of whether recipes are found
-    res.status(200).render('pages/recipes', {
-      country,
-      recipes: recipes || [] // Default to an empty array if no recipes
-    });
-  } catch (error) {
-    console.error('Error fetching recipes:', error);
-    res.status(500).send('Failed to load recipes');
-  }
-});
-
 
 // Register `hbs` as our view engine using its bound `engine()` function.
 app.engine('hbs', hbs.engine);
@@ -129,6 +77,62 @@ const waitForDatabase = async (retries = 3, interval = 3000) => {
 
 // db test
 waitForDatabase();
+
+/* ------------------------------------------------------ */
+
+app.get('/countries', (req, res) => {
+  fs.readFile('./countries.geojson', 'utf8', (err, data) => {
+    if (err) {
+      console.error('Error reading the file:', err);
+      res.status(500).send('Error reading the file');
+      return;
+    }
+    res.header('Content-Type', 'application/json');
+    res.send(data);
+  });
+});
+
+app.get('/home', (req, res) => {
+  res.render('pages/home'); // This is correct based on your structure.
+});
+
+app.get('/', (req, res) => {
+  res.redirect('/home'); 
+});
+app.get('/register', (req, res) => {
+  res.render('pages/register'); // This is correct based on your structure.
+});
+app.get('/login', (req, res) => {
+  res.render('pages/login',{});
+});
+
+// Get add recipe page for clicked on country:
+app.get('/add-recipe', (req, res) => {
+  const country = req.query.country || ''; // Get country from query, default to empty
+  res.render('pages/add_recipe', { country });
+});
+
+// Get Recipes For Country
+app.get('/recipes/:country', async (req, res) => {
+  const { country } = req.params;
+
+  try {
+    const recipes = await db.query(
+      'SELECT * FROM recipes WHERE LOWER(country) = LOWER($1)',
+      [country]
+    );
+
+    // Send a 200 response with the page regardless of whether recipes are found
+    res.status(200).render('pages/recipes', {
+      country,
+      recipes: recipes || [] // Default to an empty array if no recipes
+    });
+  } catch (error) {
+    console.error('Error fetching recipes:', error);
+    res.status(500).send('Failed to load recipes');
+  }
+});
+
 
 
   // <!-- Login, Logout, Register Routes:
@@ -201,14 +205,16 @@ app.post('/login', async (req, res) => {
   }
 });
 
-app.get('/home', (req, res) => {
+//Currently not using this log in redirect
+
+/*app.get('/home', (req, res) => {
   if (!req.session.user) {
     return res.redirect('/login'); // Redirect to login if not logged in
   }
 
   const username = req.session.user.username;
   res.render('pages/home', { username });
-});
+}); */
 
 app.get('/logout', (req, res) => {
   req.session.destroy((err) => {
@@ -293,7 +299,7 @@ app.post('/add_recipe', async (req, res) => {
 
     // Commit transaction
     await db.query('COMMIT');
-    //res.redirect('/');
+    res.redirect('/');
   } catch (error) {
     // Rollback transaction on error
     
