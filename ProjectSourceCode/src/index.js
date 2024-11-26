@@ -293,7 +293,7 @@ app.post('/add_recipe', async (req, res) => {
 
     // Commit transaction
     await db.query('COMMIT');
-    res.redirect('/');
+    //res.redirect('/');
   } catch (error) {
     // Rollback transaction on error
     
