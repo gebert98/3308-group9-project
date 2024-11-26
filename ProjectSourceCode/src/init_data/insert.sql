@@ -45,7 +45,6 @@ INSERT INTO recipes_ingredients (quantity, unit, recipe_id, ingredient_id) VALUE
 
 -- Insert sample countries
 INSERT INTO countries (name) VALUES
-  ('United States'),
   ('Italy'),
   ('Japan'),
   ('Mexico'),
@@ -55,3 +54,7 @@ INSERT INTO countries (name) VALUES
   ('China'),
   ('Spain'),
   ('Thailand');
+
+INSERT INTO countries (name) 
+VALUES ('United States')
+ON CONFLICT (name) DO NOTHING;

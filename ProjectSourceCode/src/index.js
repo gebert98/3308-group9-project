@@ -308,8 +308,12 @@ app.post('/add_recipe', async (req, res) => {
 
 
 
-/********* Get Recipes For Country *********/
-app.post('/get_recipes', async (req, res) => {
+/********* Get Recipes For Country *********
+
+I dont think this is nessicary...
+
+*/
+/*app.post('/get_recipes', async (req, res) => {
   // Extract country from the request body
   const { country } = req.body;
   
@@ -336,7 +340,7 @@ app.post('/get_recipes', async (req, res) => {
     console.error("Error fetching recipes:", error);
     res.status(500).json({ error: "An error occurred while fetching recipes" });
   }
-});
+});*/
 
 
 // For example test *********************************/ 
