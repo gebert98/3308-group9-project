@@ -8,6 +8,7 @@ const bodyParser = require('body-parser');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
 const fs = require('fs');
+const multer = require('multer');
 
 // -------------------------------------  APP CONFIG   ----------------------------------------------
 
@@ -75,6 +76,32 @@ const waitForDatabase = async (retries = 3, interval = 3000) => {
 };
 
 waitForDatabase();  // Wait for DB before starting the server
+
+// -------------------------- Multer configuration for user image uploads ------------------------------
+
+// Configure multer storage
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/'); // Save images to the "uploads" folder
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+// Multer middleware
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 2 * 1024 * 1024 }, // Limit file size to 2MB
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+    if (!allowedTypes.includes(file.mimetype)) {
+      return cb(new Error('Only JPEG, PNG, and GIF files are allowed.'));
+    }
+    cb(null, true);
+  }
+});
 
 
 // ------------------------------------- ROUTES AND HANDLERS --------------------------------------------
@@ -152,72 +179,71 @@ app.get('/recipes/:country', async (req, res) => {
 
 //*****************************************************
 
-// Add recipe to recipe table and other relations:
-app.post('/add_recipe', async (req, res) => {
+// Add recipe to recipe table and other relations
+app.post('/add_recipe', upload.single('recipeImage'), async (req, res) => {
   const { name, country, description, prep_time, cook_time, servings, difficulty } = req.body;
   const ingredientNames = req.body.ingredient_name;
   const quantities = req.body.quantity;
   const units = req.body.unit;
 
   try {
-    // Start a transaction
+    // Start database transaction
     await db.query('BEGIN');
+
+    // Determine the image path: uploaded file or default
+    const imagePath = req.body.recipeImage ? `/src/images/uploads/${req.body.recipeImage}` : '/images/default.png';
+    console.log(imagePath);
 
     // Insert recipe into `recipes` table
     const recipeResult = await db.query(
-      `INSERT INTO recipes (name, description, country, prep_time, cook_time, servings, difficulty)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO recipes (name, description, country, prep_time, cook_time, servings, difficulty, image_url)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING id`,
-      [name, description, country, prep_time, cook_time, servings, difficulty]
+      [
+        name,
+        description,
+        country,
+        prep_time,
+        cook_time,
+        servings,
+        difficulty,
+        imagePath
+      ]
     );
 
-    const recipeId = recipeResult[0].id;
-    const numIngredients = ingredientNames.length;
+    const recipeId = recipeResult[0].id; 
 
-    // Loop through ingredients
-    for (let i = 0; i < numIngredients; i++) {
-      const ingredientName = ingredientNames[i]?.trim();
-      const quantity = quantities[i] ? parseInt(quantities[i], 10) : null;
-      const unit = units[i]?.trim();
+    // Ensure ingredient data consistency
+    if (Array.isArray(ingredientNames) && ingredientNames.length > 0) {
+      for (let i = 0; i < ingredientNames.length; i++) {
+        const ingredientName = ingredientNames[i]?.trim();
+        const quantity = quantities[i] ? parseInt(quantities[i], 10) : null;
+        const unit = units[i]?.trim();
 
-      if (!ingredientName || !quantity || !unit) {
-        throw new Error(`Invalid data at index ${i}: ingredientName: ${ingredientName}, quantity: ${quantity}, unit: ${unit}`);
-      }
+        if (!ingredientName || !quantity || !unit) {
+          throw new Error(`Invalid ingredient data at index ${i}`);
+        }
 
-
-      // Insert or find ingredient in `ingredients` table
-      const ingredientResult = await db.query(
-        `INSERT INTO ingredients (name)
-         VALUES ($1)
-         ON CONFLICT (name) DO NOTHING
-         RETURNING id`,
-        [ingredientName]
-      );
-
-      let ingredientId;
-
-      if (ingredientResult.length > 0) {
-        ingredientId = ingredientResult[0].id;
-      } else {
-        // If no ID is returned, query for the ingredient ID
-        const existingIngredient = await db.query(
-          `SELECT id FROM ingredients WHERE name = $1`,
+        // Insert or find ingredient in `ingredients` table
+        const ingredientResult = await db.query(
+          `INSERT INTO ingredients (name)
+           VALUES ($1)
+           ON CONFLICT (name) DO NOTHING
+           RETURNING id`,
           [ingredientName]
         );
 
-        if (existingIngredient.length === 0) {
-          throw new Error(`Failed to retrieve ingredient ID for ${ingredientName}`);
-        }
+        const ingredientId = ingredientResult.length > 0
+          ? ingredientResult[0].id
+          : (await db.query(`SELECT id FROM ingredients WHERE name = $1`, [ingredientName]))[0].id;
 
-        ingredientId = existingIngredient[0].id;
+        // Link recipe and ingredient in `recipes_ingredients` table
+        await db.query(
+          `INSERT INTO recipes_ingredients (recipe_id, ingredient_id, quantity, unit)
+           VALUES ($1, $2, $3, $4)`,
+          [recipeId, ingredientId, quantity, unit]
+        );
       }
-
-      // Insert into `recipes_ingredients` table
-      await db.query(
-        `INSERT INTO recipes_ingredients (recipe_id, ingredient_id, quantity, unit)
-         VALUES ($1, $2, $3, $4)`,
-        [recipeId, ingredientId, quantity, unit]
-      );
     }
 
     // Commit transaction
@@ -225,14 +251,11 @@ app.post('/add_recipe', async (req, res) => {
     res.redirect('/');
   } catch (error) {
     // Rollback transaction on error
-    
     await db.query('ROLLBACK');
+    console.error('Error adding recipe:', error);
     res.status(500).send('Failed to add recipe');
   }
 });
-
-
-
 
 
 /********* Get Recipes For Country *********
