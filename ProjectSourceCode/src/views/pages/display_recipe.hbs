@@ -13,10 +13,10 @@
 {{#if logged}}
 <form method="post" action="/favorite/{{recipe.id}}">
   <button type="submit" class="btn btn-success">
-    {{#if favorited}}Saved{{else}}Add to Favorites{{/if}}
+    {{#if favorited}}✔ Saved{{else}}Add to Favorites{{/if}}
   </button>
 </form>
 {{else}}
-<p><a href="/login">Log in</a> to save this recipe!</p>
+<p><a href="/login" class="btn btn-success">Log-in to Favorite!</a></p>
 {{/if}}
 

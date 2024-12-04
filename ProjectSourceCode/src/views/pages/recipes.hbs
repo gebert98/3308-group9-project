@@ -1,6 +1,6 @@
 <div class="container my-4">
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="text-center">Recipes from {{country}}</h1>
+    <h1 class="text-center">Recipes from: {{country}}</h1>
     <a href="/add-recipe?country={{country}}" class="btn btn-success">Add Recipe</a>
   </div>
 
@@ -24,6 +24,16 @@
             </div>
             <div class="card-footer text-center">
               <a href="/recipe/{{id}}" class="btn btn-primary">View Recipe</a>
+              {{#if ../logged}}
+              <form action="/favorite/{{id}}" method="POST">
+                <input type="hidden" name="redirectUrl" value="{{../currentUrl}}">
+                <button type="submit" class="btn btn-success">
+                  {{#if is_favorite}}✔ Saved{{else}}Add to Favorites{{/if}}
+                </button>
+              </form>
+              {{else}}
+              <a href="/login" class="btn btn-success">Log-in to Favorite!</a>
+              {{/if}}
             </div>
           </div>
         </div>

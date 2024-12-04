@@ -120,18 +120,51 @@ app.get('/add-recipe', (req, res) => {
 
 // Get Recipes For Country
 app.get('/recipes/:country', async (req, res) => {
-  const { country } = req.params;
+  const { country } = req.params
+  const userId = req.session.user ? req.session.user.id : null;
+  console.log(req.session.user);
 
   try {
-    const recipes = await db.query(
-      'SELECT * FROM recipes WHERE LOWER(country) = LOWER($1)',
-      [country]
-    );
+    //const recipes = await db.query(
+    //  'SELECT * FROM recipes WHERE LOWER(country) = LOWER($1)',
+    //  [country]
+    //);
+
+
+    let recipesQuery;
+    let recipes;
+
+    if (userId) { // query that sets is_favorited based on if the user has favorited it
+      recipesQuery = `
+        SELECT r.*, 
+          CASE 
+            WHEN f.user_id IS NOT NULL THEN TRUE 
+            ELSE FALSE 
+          END AS is_favorite
+          FROM recipes r
+          LEFT JOIN favorites f 
+          ON r.id = f.recipe_id AND f.user_id = $1
+          WHERE LOWER(r.country) = LOWER($2)
+        `;
+        recipes = await db.query(recipesQuery, [userId, country]);
+    } else { // query that sets is_favorite as false for all recipes (when user is not logged in)
+      recipesQuery = `
+        SELECT r.*, FALSE AS is_favorite
+          FROM recipes r
+          WHERE LOWER(r.country) = LOWER($1)
+        `;
+        recipes = await db.query(recipesQuery, [country]);
+    }
+    const logged = req.session.user?true:false;
+    console.log("recipes: ", recipes);
+
 
     // Send a 200 response with the page regardless of whether recipes are found
     res.status(200).render('pages/recipes', {
       country,
-      recipes: recipes || [] // Default to an empty array if no recipes
+      recipes: recipes || [], // Default to an empty array if no recipes
+      currentUrl: req.originalUrl, // current url, this is so that the favorite button redirects back to the correct page
+      logged
     });
   } catch (error) {
     console.error('Error fetching recipes:', error);
@@ -497,6 +530,7 @@ app.get('/recipe/:id', async (req, res) => {
 app.post('/favorite/:recipeId', async (req, res) => {
   //console.log("/favorite route");
   const recipe_id = req.params.recipeId;
+  const redirect_url = req.body.redirectUrl || `/recipe/${recipe_id}`; // fallback in case
   try {
     // This very long query just adds to favorite if it isn't already and removes from favorite if it is
     const query = `
@@ -517,7 +551,7 @@ app.post('/favorite/:recipeId', async (req, res) => {
     //await axios.get('http://localhost:3000/recipe/'+recipe_id);  
     //const result = await recipePage(recipe_id, req);
 
-    res.redirect(`/recipe/${recipe_id}`);
+    res.redirect(redirect_url);
 
     //if(result == 404){
       //return res.status(404).send('Error: No such recipe');
