@@ -17,7 +17,8 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS recipes (
   id SERIAL PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
-  description VARCHAR(4000),
+  image_url TEXT DEFAULT '/images/default.png',
+  description TEXT,
   country VARCHAR(100),
   prep_time INTEGER,
   cook_time INTEGER,

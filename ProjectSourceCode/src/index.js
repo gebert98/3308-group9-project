@@ -9,6 +9,7 @@ const session = require('express-session');
 const bcrypt = require('bcryptjs');
 const axios = require('axios');
 const fs = require('fs');
+const multer = require('multer');
 
 // -------------------------------------  APP CONFIG   ----------------------------------------------
 
@@ -25,6 +26,9 @@ app.use(
 
 // Static files (CSS, JS, images)
 app.use(express.static('public'));
+// Serve static files from the "src/images" directory
+app.use('/images', express.static(path.join(__dirname, 'public/images')));
+app.use('/images/uploads', express.static(path.join(__dirname, 'public/images/uploads')));
 
 // Session configuration
 app.use(
@@ -76,6 +80,35 @@ const waitForDatabase = async (retries = 3, interval = 3000) => {
 };
 
 waitForDatabase();  // Wait for DB before starting the server
+
+// -------------------------- Multer configuration for user image uploads ------------------------------
+
+// Configure multer storage
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    // Correct path: Adjust based on your structure
+    const uploadsPath = path.join(__dirname, '../public/images/uploads'); 
+    cb(null, uploadsPath);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  },
+});
+
+
+// Multer middleware
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 2 * 1024 * 1024 }, // Limit file size to 2MB
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+    if (!allowedTypes.includes(file.mimetype)) {
+      return cb(new Error('Only JPEG, PNG, and GIF files are allowed.'));
+    }
+    cb(null, true);
+  }
+});
 
 
 // ------------------------------------- ROUTES AND HANDLERS --------------------------------------------
@@ -186,86 +219,75 @@ app.get('/recipes/:country', async (req, res) => {
 
 //*****************************************************
 
-// Add recipe to recipe table and other relations:
-app.post('/add_recipe', async (req, res) => {
+// Add recipe to recipe table and other relations
+app.post('/add_recipe', upload.single('recipeImage'), async (req, res) => {
   const { name, country, description, prep_time, cook_time, servings, difficulty } = req.body;
   const ingredientNames = req.body.ingredient_name;
   const quantities = req.body.quantity;
   const units = req.body.unit;
 
   try {
-    // Start a transaction
     await db.query('BEGIN');
+    console.log(req.file);
 
-    // Insert recipe into `recipes` table
+    const imagePath = req.file ? `/images/uploads/${req.file.filename}` : '/images/default.png';
+
     const recipeResult = await db.query(
-      `INSERT INTO recipes (name, description, country, prep_time, cook_time, servings, difficulty)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO recipes (name, description, country, prep_time, cook_time, servings, difficulty, image_url)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING id`,
-      [name, description, country, prep_time, cook_time, servings, difficulty]
+      [
+        name,
+        description,
+        country,
+        prep_time,
+        cook_time,
+        servings,
+        difficulty,
+        imagePath,
+      ]
     );
 
     const recipeId = recipeResult[0].id;
-    const numIngredients = ingredientNames.length;
 
-    // Loop through ingredients
-    for (let i = 0; i < numIngredients; i++) {
-      const ingredientName = ingredientNames[i]?.trim();
-      const quantity = quantities[i] ? parseInt(quantities[i], 10) : null;
-      const unit = units[i]?.trim();
+    if (Array.isArray(ingredientNames) && ingredientNames.length > 0) {
+      for (let i = 0; i < ingredientNames.length; i++) {
+        const ingredientName = ingredientNames[i]?.trim();
+        const quantity = quantities[i] ? parseInt(quantities[i], 10) : null;
+        const unit = units[i]?.trim();
 
-      if (!ingredientName || !quantity || !unit) {
-        throw new Error(`Invalid data at index ${i}: ingredientName: ${ingredientName}, quantity: ${quantity}, unit: ${unit}`);
-      }
+        if (!ingredientName || !quantity || !unit) {
+          throw new Error(`Invalid ingredient data at index ${i}`);
+        }
 
-
-      // Insert or find ingredient in `ingredients` table
-      const ingredientResult = await db.query(
-        `INSERT INTO ingredients (name)
-         VALUES ($1)
-         ON CONFLICT (name) DO NOTHING
-         RETURNING id`,
-        [ingredientName]
-      );
-
-      let ingredientId;
-
-      if (ingredientResult.length > 0) {
-        ingredientId = ingredientResult[0].id;
-      } else {
-        // If no ID is returned, query for the ingredient ID
-        const existingIngredient = await db.query(
-          `SELECT id FROM ingredients WHERE name = $1`,
+        const ingredientResult = await db.query(
+          `INSERT INTO ingredients (name)
+           VALUES ($1)
+           ON CONFLICT (name) DO NOTHING
+           RETURNING id`,
           [ingredientName]
         );
 
-        if (existingIngredient.length === 0) {
-          throw new Error(`Failed to retrieve ingredient ID for ${ingredientName}`);
-        }
+        const ingredientId = ingredientResult.length > 0
+          ? ingredientResult[0].id
+          : (await db.query(`SELECT id FROM ingredients WHERE name = $1`, [ingredientName]))[0].id;
 
-        ingredientId = existingIngredient[0].id;
+        await db.query(
+          `INSERT INTO recipes_ingredients (recipe_id, ingredient_id, quantity, unit)
+           VALUES ($1, $2, $3, $4)`,
+          [recipeId, ingredientId, quantity, unit]
+        );
       }
-
-      // Insert into `recipes_ingredients` table
-      await db.query(
-        `INSERT INTO recipes_ingredients (recipe_id, ingredient_id, quantity, unit)
-         VALUES ($1, $2, $3, $4)`,
-        [recipeId, ingredientId, quantity, unit]
-      );
     }
 
-    // Commit transaction
     await db.query('COMMIT');
     res.redirect('/');
   } catch (error) {
-    // Rollback transaction on error
-    
     await db.query('ROLLBACK');
+    console.error('Error adding recipe:', error);
     res.status(500).send('Failed to add recipe');
   }
 });
-
-
 
 
 
