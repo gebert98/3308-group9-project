@@ -23,7 +23,7 @@
               </p>
             </div>
             <div class="card-footer text-center">
-              <a href="/recipe/{{id}}" class="btn btn-primary">View Recipe</a>
+              <a href="/recipe/{{id}}" class="btn btn-primary m-1">View Recipe</a>
               {{#if ../logged}}
               <form action="/favorite/{{id}}" method="POST">
                 <input type="hidden" name="redirectUrl" value="{{../currentUrl}}">
