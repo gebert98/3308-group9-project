@@ -7,11 +7,8 @@ const pgp = require('pg-promise')();
 const bodyParser = require('body-parser');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
-<<<<<<< HEAD:ProjectSourceCode/src/old_index.js
 const axios = require('axios');
-=======
 const fs = require('fs');
->>>>>>> origin/main:ProjectSourceCode/src/index.js
 
 // -------------------------------------  APP CONFIG   ----------------------------------------------
 
@@ -69,7 +66,7 @@ const waitForDatabase = async (retries = 3, interval = 3000) => {
       console.log('Database connection successful');
       return;
     } catch (error) {
-      console.log('Database not ready, retrying...', retries);
+      console.log('Database not ready, retrying...', error, retries);
       retries--;
       await new Promise(r => setTimeout(r, interval)); // Wait before retry
     }
@@ -342,11 +339,10 @@ app.post('/login', async (req, res) => {
           res.redirect('/home');
       });
 
-<<<<<<< HEAD:ProjectSourceCode/src/old_index.js
-        req.session.save(() => {
+        /*req.session.save(() => { //Duplicate why?
 
             res.redirect('/home');
-        });
+        });*/
 
     } catch (error) {
         console.error("Error during login:", error);
@@ -357,11 +353,6 @@ app.post('/login', async (req, res) => {
 app.get('/home', (req, res) => { //TODO does this work?
   if (!req.session.user) {
     return res.redirect('/login'); // Redirect to login if not logged in
-=======
-  } catch (error) {
-      console.error("Error during login:", error);
-      res.status(500).send('Error during login');
->>>>>>> origin/main:ProjectSourceCode/src/index.js
   }
 });
 
@@ -376,7 +367,6 @@ app.get('/logout', (req, res) => {
   });
 });
 
-<<<<<<< HEAD:ProjectSourceCode/src/old_index.js
 app.post('/add_recipe', async (req, res) => {
   try {
       const {
@@ -504,9 +494,9 @@ app.get('/recipe/:id', async (req, res) => {
 //***************************************************
 // toggle if a recipe is favorited or not
 
-app.post('/favorite', async (req, res) => {
-  console.log("/favorite route");
-  const recipe_id = req.body.recipe_id
+app.post('/favorite/:recipeId', async (req, res) => {
+  //console.log("/favorite route");
+  const recipe_id = req.params.recipeId;
   try {
     // This very long query just adds to favorite if it isn't already and removes from favorite if it is
     const query = `
@@ -525,14 +515,17 @@ app.post('/favorite', async (req, res) => {
     await db.query(query, [req.session.user.id, recipe_id]);
     //console.log("query completed");
     //await axios.get('http://localhost:3000/recipe/'+recipe_id);  
-    const result = await recipePage(recipe_id, req);
-    if(result == 404){
-      return res.status(404).send('Error: No such recipe');
-    }
+    //const result = await recipePage(recipe_id, req);
+
+    res.redirect(`/recipe/${recipe_id}`);
+
+    //if(result == 404){
+      //return res.status(404).send('Error: No such recipe');
+    //}
     //const recipe  = result[0];
     //const logged = result[1];
     //const favorited = result[2];
-    console.log(result);
+    //console.log(result);
     //res.render('pages/display_recipe', {recipe, logged, favorited});
   } catch (err) {
     console.error(err);
@@ -546,13 +539,8 @@ app.get('/welcome', (req, res) => {
 });
 /*************************************************** */
 
-module.exports = app.listen(3000, () => {
-  console.log('Server is running on port 3000');
-});
-=======
 // ------------------------------------- START SERVER -----------------------------------------------
 const PORT = process.env.PORT || 3000;
 module.exports = app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
->>>>>>> origin/main:ProjectSourceCode/src/index.js
