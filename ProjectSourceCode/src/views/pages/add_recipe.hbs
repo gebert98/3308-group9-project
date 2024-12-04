@@ -14,7 +14,7 @@
     </script>
     <div class="container">
         <h1>Add a New Recipe</h1>
-        <form action="/add_recipe" method="POST">
+        <form action="/add_recipe" method="POST" enctype="multipart/form-data">
 
             <!-- Recipe Name -->
             <div class="form-group">
@@ -86,7 +86,7 @@
             <!-- Image Upload -->
             <div class="form-group">
                 <label for="recipeImage">Recipe Image</label>
-                <input type="file" id="recipeImage" name="recipeImage" class="form-control" accept="/image/*">
+                <input type="file" id="recipeImage" name="recipeImage" class="form-control" accept="image/*">
             </div>
             
             <!-- Submit Button -->

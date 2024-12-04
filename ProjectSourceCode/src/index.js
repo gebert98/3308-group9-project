@@ -25,6 +25,9 @@ app.use(
 
 // Static files (CSS, JS, images)
 app.use(express.static('public'));
+// Serve static files from the "src/images" directory
+app.use('/images', express.static(path.join(__dirname, 'public/images')));
+app.use('/images/uploads', express.static(path.join(__dirname, 'public/images/uploads')));
 
 // Session configuration
 app.use(
@@ -82,13 +85,16 @@ waitForDatabase();  // Wait for DB before starting the server
 // Configure multer storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/'); // Save images to the "uploads" folder
+    // Correct path: Adjust based on your structure
+    const uploadsPath = path.join(__dirname, '../public/images/uploads'); 
+    cb(null, uploadsPath);
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
+  },
 });
+
 
 // Multer middleware
 const upload = multer({
@@ -187,14 +193,11 @@ app.post('/add_recipe', upload.single('recipeImage'), async (req, res) => {
   const units = req.body.unit;
 
   try {
-    // Start database transaction
     await db.query('BEGIN');
+    console.log(req.file);
 
-    // Determine the image path: uploaded file or default
-    const imagePath = req.body.recipeImage ? `/src/images/uploads/${req.body.recipeImage}` : '/images/default.png';
-    console.log(imagePath);
+    const imagePath = req.file ? `/images/uploads/${req.file.filename}` : '/images/default.png';
 
-    // Insert recipe into `recipes` table
     const recipeResult = await db.query(
       `INSERT INTO recipes (name, description, country, prep_time, cook_time, servings, difficulty, image_url)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -207,13 +210,12 @@ app.post('/add_recipe', upload.single('recipeImage'), async (req, res) => {
         cook_time,
         servings,
         difficulty,
-        imagePath
+        imagePath,
       ]
     );
 
-    const recipeId = recipeResult[0].id; 
+    const recipeId = recipeResult[0].id;
 
-    // Ensure ingredient data consistency
     if (Array.isArray(ingredientNames) && ingredientNames.length > 0) {
       for (let i = 0; i < ingredientNames.length; i++) {
         const ingredientName = ingredientNames[i]?.trim();
@@ -224,7 +226,6 @@ app.post('/add_recipe', upload.single('recipeImage'), async (req, res) => {
           throw new Error(`Invalid ingredient data at index ${i}`);
         }
 
-        // Insert or find ingredient in `ingredients` table
         const ingredientResult = await db.query(
           `INSERT INTO ingredients (name)
            VALUES ($1)
@@ -237,7 +238,6 @@ app.post('/add_recipe', upload.single('recipeImage'), async (req, res) => {
           ? ingredientResult[0].id
           : (await db.query(`SELECT id FROM ingredients WHERE name = $1`, [ingredientName]))[0].id;
 
-        // Link recipe and ingredient in `recipes_ingredients` table
         await db.query(
           `INSERT INTO recipes_ingredients (recipe_id, ingredient_id, quantity, unit)
            VALUES ($1, $2, $3, $4)`,
@@ -246,16 +246,15 @@ app.post('/add_recipe', upload.single('recipeImage'), async (req, res) => {
       }
     }
 
-    // Commit transaction
     await db.query('COMMIT');
     res.redirect('/');
   } catch (error) {
-    // Rollback transaction on error
     await db.query('ROLLBACK');
     console.error('Error adding recipe:', error);
     res.status(500).send('Failed to add recipe');
   }
 });
+
 
 
 /********* Get Recipes For Country *********
