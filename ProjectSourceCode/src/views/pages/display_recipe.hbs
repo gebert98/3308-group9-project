@@ -1,0 +1,22 @@
+<h1>{{recipe.name}}</h1>
+<p>{{recipe.description}}</h1>
+<h3>Ingredients:</h3>
+<ul> 
+  {{#each recipe.ingredients}}
+    <li>{{this.quantity}} {{this.unit}} {{name}} </li>
+  {{/each}}
+</ul>
+
+<h3>Instructions:</h3>
+<p>{{recipe.instructions}}</p>
+
+{{#if logged}}
+<form method="post" action="/favorite/{{recipe.id}}">
+  <button type="submit" class="btn btn-success">
+    {{#if favorited}}✔ Saved{{else}}Add to Favorites{{/if}}
+  </button>
+</form>
+{{else}}
+<p><a href="/login" class="btn btn-success">Log-in to Favorite!</a></p>
+{{/if}}
+

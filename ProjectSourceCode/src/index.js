@@ -7,6 +7,7 @@ const pgp = require('pg-promise')();
 const bodyParser = require('body-parser');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
+const axios = require('axios');
 const fs = require('fs');
 
 // -------------------------------------  APP CONFIG   ----------------------------------------------
@@ -65,7 +66,7 @@ const waitForDatabase = async (retries = 3, interval = 3000) => {
       console.log('Database connection successful');
       return;
     } catch (error) {
-      console.log('Database not ready, retrying...', retries);
+      console.log('Database not ready, retrying...', error, retries);
       retries--;
       await new Promise(r => setTimeout(r, interval)); // Wait before retry
     }
@@ -119,18 +120,51 @@ app.get('/add-recipe', (req, res) => {
 
 // Get Recipes For Country
 app.get('/recipes/:country', async (req, res) => {
-  const { country } = req.params;
+  const { country } = req.params
+  const userId = req.session.user ? req.session.user.id : null;
+  console.log(req.session.user);
 
   try {
-    const recipes = await db.query(
-      'SELECT * FROM recipes WHERE LOWER(country) = LOWER($1)',
-      [country]
-    );
+    //const recipes = await db.query(
+    //  'SELECT * FROM recipes WHERE LOWER(country) = LOWER($1)',
+    //  [country]
+    //);
+
+
+    let recipesQuery;
+    let recipes;
+
+    if (userId) { // query that sets is_favorited based on if the user has favorited it
+      recipesQuery = `
+        SELECT r.*, 
+          CASE 
+            WHEN f.user_id IS NOT NULL THEN TRUE 
+            ELSE FALSE 
+          END AS is_favorite
+          FROM recipes r
+          LEFT JOIN favorites f 
+          ON r.id = f.recipe_id AND f.user_id = $1
+          WHERE LOWER(r.country) = LOWER($2)
+        `;
+        recipes = await db.query(recipesQuery, [userId, country]);
+    } else { // query that sets is_favorite as false for all recipes (when user is not logged in)
+      recipesQuery = `
+        SELECT r.*, FALSE AS is_favorite
+          FROM recipes r
+          WHERE LOWER(r.country) = LOWER($1)
+        `;
+        recipes = await db.query(recipesQuery, [country]);
+    }
+    const logged = req.session.user?true:false;
+    console.log("recipes: ", recipes);
+
 
     // Send a 200 response with the page regardless of whether recipes are found
     res.status(200).render('pages/recipes', {
       country,
-      recipes: recipes || [] // Default to an empty array if no recipes
+      recipes: recipes || [], // Default to an empty array if no recipes
+      currentUrl: req.originalUrl, // current url, this is so that the favorite button redirects back to the correct page
+      logged
     });
   } catch (error) {
     console.error('Error fetching recipes:', error);
@@ -338,9 +372,20 @@ app.post('/login', async (req, res) => {
           res.redirect('/home');
       });
 
-  } catch (error) {
-      console.error("Error during login:", error);
-      res.status(500).send('Error during login');
+        /*req.session.save(() => { //Duplicate why?
+
+            res.redirect('/home');
+        });*/
+
+    } catch (error) {
+        console.error("Error during login:", error);
+        res.status(500).send('Error during login');
+    }
+});
+
+app.get('/home', (req, res) => { //TODO does this work?
+  if (!req.session.user) {
+    return res.redirect('/login'); // Redirect to login if not logged in
   }
 });
 
@@ -354,6 +399,179 @@ app.get('/logout', (req, res) => {
     res.redirect('/login');
   });
 });
+
+app.post('/add_recipe', async (req, res) => {
+  try {
+      const {
+          title,
+          country_id,
+          description,
+          prep_time,
+          cook_time,
+          servings,
+          difficulty,
+          ingredients
+      } = req.body;
+
+      // Step 1: Insert the recipe into the `recipes` table
+      const recipeResult = await pool.query(
+          `INSERT INTO recipes (name, country_id, description, prep_time, cook_time, servings, difficulty)
+          VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+          [title, country_id, description, prep_time, cook_time, servings, difficulty]
+      );
+      const recipeId = recipeResult.rows[0].id;
+
+      // Step 2: Insert ingredients into the `recipes_ingredients` table
+      if (ingredients) {
+          const ingredientsArray = ingredients.split(',').map(ingredient => ingredient.trim());
+          
+          for (let ingredient of ingredientsArray) {
+              // Assuming ingredient has a format like "1 cup flour"
+              const [quantity, unit, ...nameParts] = ingredient.split(' ');
+              const name = nameParts.join(' ');
+
+              // Check if the ingredient already exists in the `ingredients` table
+              let ingredientResult = await pool.query(
+                  `SELECT id FROM ingredients WHERE name = $1`,
+                  [name]
+              );
+
+              let ingredientId;
+              if (ingredientResult.rows.length > 0) {
+                  ingredientId = ingredientResult.rows[0].id;
+              } else {
+                  // If not found, insert the new ingredient
+                  const newIngredientResult = await pool.query(
+                      `INSERT INTO ingredients (name) VALUES ($1) RETURNING id`,
+                      [name]
+                  );
+                  ingredientId = newIngredientResult.rows[0].id;
+              }
+
+              // Insert into the `recipes_ingredients` table
+              await pool.query(
+                  `INSERT INTO recipes_ingredients (recipe_id, ingredient_id, quantity, unit)
+                  VALUES ($1, $2, $3, $4)`,
+                  [recipeId, ingredientId, quantity || null, unit || null]
+              );
+          }
+      }
+
+      // Redirect or send a success response
+      res.redirect('/recipes');
+  } catch (err) {
+      console.error(err);
+      res.status(500).send('Error adding recipe');
+  }
+});
+
+
+// *********************************************************
+// display recipe based on id
+
+async function recipePage(id, req) {
+  const query1 = 'SELECT * FROM recipes WHERE id = $1';
+  const query2 = `
+    SELECT
+      i.name AS name,
+      ri.quantity,
+      ri.unit
+    FROM recipes r
+    JOIN recipes_ingredients ri ON r.id = ri.recipe_id
+    JOIN ingredients i ON ri.ingredient_id = i.id
+    WHERE r.id = $1`;
+  const query3 = "SELECT 1 FROM favorites WHERE user_id = $1 AND recipe_id = $2;";
+  const results = await db.any (query1, [id]);
+  const ingredients = await db.any(query2, [id]);
+
+  const favorite = await db.any(query3, [req.session.user?req.session.user.id:-1, id]); // terrible way to do this but it works
+  const favorited = (favorite.length > 0) ?true:false;
+
+  //console.log(results + "\n" + ingredients);
+  if(results.length == 0){
+    return 404;
+  }
+
+  const logged = req.session.user ? true : false;
+
+  const recipe = {
+
+    id: results[0].id,
+    name: results[0].name,
+    description: results[0].description,
+    instructions: results[0].instructions,
+    ingredients: ingredients,
+  }  
+  return [recipe, logged, favorited];
+}
+
+app.get('/recipe/:id', async (req, res) => {
+
+  try{
+    const result = await recipePage(req.params.id,req);
+    if(result == 404){
+      return res.status(404).send('Error: No such recipe');
+    }
+    const recipe  = result[0];
+    const logged = result[1];
+    const favorited = result[2];
+    console.log(result);
+    res.render('pages/display_recipe', {recipe, logged, favorited});
+  }
+  catch(e) {
+    console.error(e);
+    res.status(500).send('Database Error');
+  }
+});
+
+//***************************************************
+// toggle if a recipe is favorited or not
+
+app.post('/favorite/:recipeId', async (req, res) => {
+  //console.log("/favorite route");
+  const recipe_id = req.params.recipeId;
+  const redirect_url = req.body.redirectUrl || `/recipe/${recipe_id}`; // fallback in case
+  try {
+    // This very long query just adds to favorite if it isn't already and removes from favorite if it is
+    const query = `
+      WITH upsert AS (
+        INSERT INTO favorites (user_id, recipe_id)
+        SELECT $1, $2
+        WHERE NOT EXISTS (
+          SELECT 1 FROM favorites WHERE user_id = $1 AND recipe_id = $2
+        )
+        RETURNING *
+      )
+      DELETE FROM favorites
+      WHERE user_id = $1 AND recipe_id = $2 AND NOT EXISTS (SELECT 1 FROM upsert);
+    `;
+    //console.log("query starting");
+    await db.query(query, [req.session.user.id, recipe_id]);
+    //console.log("query completed");
+    //await axios.get('http://localhost:3000/recipe/'+recipe_id);  
+    //const result = await recipePage(recipe_id, req);
+
+    res.redirect(redirect_url);
+
+    //if(result == 404){
+      //return res.status(404).send('Error: No such recipe');
+    //}
+    //const recipe  = result[0];
+    //const logged = result[1];
+    //const favorited = result[2];
+    //console.log(result);
+    //res.render('pages/display_recipe', {recipe, logged, favorited});
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Database error');
+  }
+});
+
+// For example test *********************************/ 
+app.get('/welcome', (req, res) => {
+  res.json({status: 'success', message: 'Welcome!'});
+});
+/*************************************************** */
 
 // ------------------------------------- START SERVER -----------------------------------------------
 const PORT = process.env.PORT || 3000;
