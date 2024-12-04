@@ -1,60 +1,92 @@
-<form action="/add_recipe" method="POST">
-    <!-- Recipe Title -->
-    <div class="form-group">
-        <label for="title">Recipe Title</label>
-        <input type="text" class="form-control" id="title" name="title" required>
-    </div>
+<body>
+    <script>
+        // Dynamically add ingredient input rows
+        function addIngredient() {
+            const container = document.getElementById('ingredients-container');
+            const newIngredientRow = `
+                <div class="ingredient-row">
+                    <input type="text" name="ingredient_name[]" placeholder="Ingredient name" required>
+                    <input type="text" name="quantity[]" placeholder="Quantity" required>
+                    <input type="text" name="unit[]" placeholder="Unit (e.g., cups, tbsp)" required>
+                </div>`;
+            container.insertAdjacentHTML('beforeend', newIngredientRow);
+        }
+    </script>
+    <div class="container">
+        <h1>Add a New Recipe</h1>
+        <form action="/add_recipe" method="POST">
 
-    <!-- Country -->
-    <div class="form-group">
-        <label for="country_id">Country</label>
-        <select class="form-control" id="country_id" name="country_id" required>
-            {{#each countries}}
-            <option value="{{this.country_id}}">{{this.name}}</option>
-            {{/each}}
-        </select>
-    </div>
+            <!-- Recipe Name -->
+            <div class="form-group">
+                <label for="name">Recipe Name</label>
+                <input type="text" id="name" name="name" class="form-control" required>
+            </div>
 
-    <!-- Description -->
-    <div class="form-group">
-        <label for="description">Description</label>
-        <textarea class="form-control" id="description" name="description" rows="4"></textarea>
-    </div>
+            <!-- Country -->
+            <div class="form-group">
+                <label for="country">Country</label>
 
-    <!-- Preparation Time -->
-    <div class="form-group">
-        <label for="prep_time">Preparation Time (minutes)</label>
-        <input type="number" class="form-control" id="prep_time" name="prep_time" min="0">
-    </div>
+                    <input
+                    type="text"
+                    id="country"
+                    name="country"
+                    class="form-control"
+                    value="{{country}}" <!-- Pre-fill country -->
+                    readonly
+                    >
+            </div>
 
-    <!-- Cook Time -->
-    <div class="form-group">
-        <label for="cook_time">Cook Time (minutes)</label>
-        <input type="number" class="form-control" id="cook_time" name="cook_time" min="0">
-    </div>
+            <!-- Description -->
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" class="form-control" rows="3"></textarea>
+            </div>
 
-    <!-- Servings -->
-    <div class="form-group">
-        <label for="servings">Servings</label>
-        <input type="number" class="form-control" id="servings" name="servings" min="1" required>
-    </div>
+            <!-- Prep Time -->
+            <div class="form-group">
+                <label for="prep_time">Prep Time (minutes)</label>
+                <input type="number" id="prep_time" name="prep_time" class="form-control" min="0">
+            </div>
 
-    <!-- Difficulty -->
-    <div class="form-group">
-        <label for="difficulty">Difficulty</label>
-        <select class="form-control" id="difficulty" name="difficulty" required>
-            <option value="easy">Easy</option>
-            <option value="moderate">Moderate</option>
-            <option value="hard">Hard</option>
-        </select>
-    </div>
+            <!-- Cook Time -->
+            <div class="form-group">
+                <label for="cook_time">Cook Time (minutes)</label>
+                <input type="number" id="cook_time" name="cook_time" class="form-control" min="0">
+            </div>
 
-    <!-- Ingredients -->
-    <div class="form-group">
-        <label for="ingredients">Ingredients (comma separated)</label>
-        <input type="text" class="form-control" id="ingredients" name="ingredients" placeholder="e.g., 1 cup flour, 2 tbsp sugar">
-    </div>
+            <!-- Servings -->
+            <div class="form-group">
+                <label for="servings">Servings</label>
+                <input type="number" id="servings" name="servings" class="form-control" min="1">
+            </div>
 
-    <!-- Submit Button -->
-    <button type="submit" class="btn btn-primary mt-3">Add Recipe</button>
-</form>
+            <!-- Difficulty -->
+            <div class="form-group">
+                <label for="difficulty">Difficulty</label>
+                <select id="difficulty" name="difficulty" class="form-control" required>
+                    <option value="easy">Easy</option>
+                    <option value="moderate">Moderate</option>
+                    <option value="hard">Hard</option>
+                </select>
+            </div>
+
+            <!-- Ingredients -->
+            <div class="form-group">
+                <label>Ingredients</label>
+                <div id="ingredients-container">
+                    <div class="ingredient-row">
+                        <input type="text" name="ingredient_name[]" placeholder="Ingredient name" required>
+                        <input type="text" name="quantity[]" placeholder="Quantity" required>
+                        <input type="text" name="unit[]" placeholder="Unit (e.g., cups, tbsp)" required>
+                    </div>
+                </div>
+                <button type="button" onclick="addIngredient()">Add Another Ingredient</button>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-primary">Add Recipe</button>
+        </form>
+    </div>
+</body>
+</html>
+
