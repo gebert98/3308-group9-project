@@ -307,10 +307,10 @@ app.get('/recipe/:id', async (req, res) => {
 });
 
 //***************************************************
-// favorite or unfavorite recipe
-
+// toggle if a recipe is favorited or not
 
 app.post('/favorite', async (req, res) => {
+  console.log("/favorite route");
   const recipe_id = req.body.recipe_id
   try {
     // This very long query just adds to favorite if it isn't already and removes from favorite if it is
@@ -326,19 +326,19 @@ app.post('/favorite', async (req, res) => {
       DELETE FROM favorites
       WHERE user_id = $1 AND recipe_id = $2 AND NOT EXISTS (SELECT 1 FROM upsert);
     `;
-    console.log("query starting");
+    //console.log("query starting");
     await db.query(query, [req.session.user.id, recipe_id]);
-    console.log("query completed");
+    //console.log("query completed");
     //await axios.get('http://localhost:3000/recipe/'+recipe_id);  
     const result = await recipePage(recipe_id, req);
     if(result == 404){
       return res.status(404).send('Error: No such recipe');
     }
-    const recipe  = result[0];
-    const logged = result[1];
-    const favorited = result[2];
+    //const recipe  = result[0];
+    //const logged = result[1];
+    //const favorited = result[2];
     console.log(result);
-    res.render('pages/display_recipe', {recipe, logged, favorited});
+    //res.render('pages/display_recipe', {recipe, logged, favorited});
   } catch (err) {
     console.error(err);
     res.status(500).send('Database error');

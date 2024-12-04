@@ -21,4 +21,34 @@
 <p><a href="/login">Log in</a> to save this recipe!</p>
 {{/if}}
 
+<h3> AI TEST BELOW </h3>
+
+<button id="postButton">Send POST Request</button>
+
+<script>
+     document.getElementById('postButton').addEventListener('click', () => {
+         const data = { recipe_id: {{recipe.id}} };
+
+         fetch('https://localhost:3000/favorite', {
+             method: 'POST',
+             headers: {
+                 'Content-Type': 'application/json',
+             },
+             body: JSON.stringify(data),
+         })
+         .then(response => {
+             if (!response.ok) {
+                 throw new Error('Network response was not ok ' + response.statusText);
+             }
+             return response.json(); // If expecting a JSON response
+         })
+         .then(data => {
+             console.log('Success:', data);
+         })
+         .catch(error => {
+             console.error('Error:', error);
+         });
+     });
+ </script>
+
 
