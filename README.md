@@ -1,37 +1,98 @@
+# Global Recipe Map  
+
+## Overview  
+**Global Recipe Map** is an interactive web application that allows users to explore and experience culinary delights from around the world. By clicking on an interactive globe, users can discover diverse recipes, traditional dishes, and street foods specific to each geographic location. The platform fosters a deeper understanding of global cuisines and brings international flavors to home kitchens.  
+
+## Contributors  
+This project was developed by:  
+- **Gaeryth Elbert**  
+- **Maxwell Rodgers**  
+- **Randy Eldredge**  
+- **Tyler Min**  
+- **Veranika Kamenka**  
+
+## Technology Stack  
+The application leverages the following technologies:  
+- **Frontend:**  
+  - HTML  
+  - CSS  
+  - JavaScript  
+  - [Three.js](https://threejs.org/) for globe visualization  
+    - `"three": "https://cdn.jsdelivr.net/npm/three@0.134.0/build/three.module.js"`  
+    - `"three/addons/": "https://cdn.jsdelivr.net/npm/three@0.134.0/examples/jsm/"`  
+- **Backend:**  
+  - Node.js  
+  - Express.js  
+- **Database:**  
+  - PostgreSQL  
+- **APIs:**  
+  - Integration with third-party APIs for recipes and cultural insights  
+
+## Prerequisites  
+To run the application locally, ensure you have the following installed:  
+- **Node.js** (version 16.x or higher)  
+- **npm** or **yarn** package manager  
+- **PostgreSQL**  
+
+## Environment Variables  
+Create a `.env` file in the root directory and add the following credentials:  
+
+env: 
+
+# Database credentials  
+POSTGRES_USER="postgres" 
+POSTGRES_PASSWORD="pwd"  
+POSTGRES_DB="users_db"  
+
+# Session secret  
+SESSION_SECRET="YbyWeG5iNJZ9kW4l"  
 
 
-## Overview
-Global Recipe Map is an interactive web application that allows users to explore culinary delights from around the world by clicking on a globe interface. This platform serves as a visual and engaging way to discover diverse foods, recipes, and local cuisines based on geographic location.
+Instructions to Run Locally
+To set up and run the application locally:
 
-## Features
-- **Interactive Globe Interface:**
-  Users can rotate, zoom, and click on various countries or regions on the globe to access food-related content specific to that area.
+Clone the Repository
 
-- **Localized Food Recommendations:**
-  Upon clicking a location, users are presented with a curated list of popular dishes, street foods, and traditional recipes native to the selected region.
+git clone <repository-url>  
+Navigate to the Project Directory
 
-- **Recipe Database:**
-  Each recommended dish links to detailed recipes, including ingredients, cooking instructions, and preparation time, allowing users to recreate authentic global cuisines at home.
+cd 3308-group9-project
 
-- **User Reviews and Ratings:**
-  Users can leave reviews and ratings for recipes they try, fostering a community of food enthusiasts who share their culinary experiences.
+Install Dependencies:
+npm install
 
-- **Search and Filter Options:**
-  Users can search for specific dishes, ingredients, or dietary preferences (e.g., vegetarian, gluten-free) and filter results accordingly.
+Set Up the Database:
 
-- **Bookmark and Share:**
-  Users can bookmark their favorite recipes and share them with friends via social media or email, encouraging culinary exploration among their network.
+Start PostgreSQL and create a database with the name specified in the .env file (users_db).
+Ensure the POSTGRES_USER and POSTGRES_PASSWORD match your PostgreSQL configuration.
+
+Start the Application
+
+Build and Start the Docker Containers
+Use Docker Compose to set up the application and database:
+
+docker-compose up -d
+Access the Application
+Open your browser and navigate to:
+http://localhost:3000
+
+Stop the Application
+
+When done, stop the containers with:
+docker-compose down
+
+Running Tests
+Follow these steps to run the test suite:
 
 
-## Target Audience
-Global Recipe Map is designed for food lovers, travelers, and home cooks looking to explore and expand their culinary repertoire by discovering new flavors from different cultures around the world.
 
-## Technology Stack
-The application is built using modern web technologies, including:
-- **Frontend:** HTML, CSS, JavaScript, and a globe visualization library (e.g., WebGL or D3.js)
-- **Backend:** Node.js with an Express framework, hosting a database of recipes and food data
-- **APIs:** Integration with third-party APIs for recipe sourcing and cultural insights
+View Results
+Test results will be displayed in the terminal. Verify functionality and address any issues reported.
 
-## Conclusion
-Global Recipe Map transforms the way users experience food from different cultures, making culinary exploration fun, interactive, and educational. By simply clicking on a globe, users embark on a global gastronomic journey right from their devices.
+Deployed Application
+Access the live version of the application here:
+https://three308-group9-project.onrender.com 
+
+Explore global cuisines and expand your culinary horizons with Global Recipe Map! 🌍🍴
+
 
