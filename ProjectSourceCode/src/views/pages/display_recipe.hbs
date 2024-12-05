@@ -1,22 +1,39 @@
-<h1>{{recipe.name}}</h1>
-<p>{{recipe.description}}</h1>
-<h3>Ingredients:</h3>
-<ul> 
-  {{#each recipe.ingredients}}
-    <li>{{this.quantity}} {{this.unit}} {{name}} </li>
-  {{/each}}
-</ul>
+<div class="container mt-5">
+  <div class="text-center">
+    <h1>{{recipe.name}}</h1>
+    <img src="{{recipe.image_url}}" alt="{{recipe.name}}" class="img-fluid mt-3 mb-4" style="max-width: 400px; height: auto;">
+  </div>
 
-<h3>Instructions:</h3>
-<p>{{recipe.instructions}}</p>
+  <div class="text-center mb-4">
+    <p>{{recipe.description}}</p>
+  </div>
 
-{{#if logged}}
-<form method="post" action="/favorite/{{recipe.id}}">
-  <button type="submit" class="btn btn-success">
-    {{#if favorited}}✔ Saved{{else}}Add to Favorites{{/if}}
-  </button>
-</form>
-{{else}}
-<p><a href="/login" class="btn btn-success">Log-in to Favorite!</a></p>
-{{/if}}
+  <div class="ingredients-section">
+    <h3>Ingredients:</h3>
+    <ul class="list-unstyled">
+      {{#each recipe.ingredients}}
+        <li>{{this.quantity}} {{this.unit}} {{name}}</li>
+      {{/each}}
+    </ul>
+  </div>
+
+  <div class="instructions-section mt-4">
+    <h3>Instructions:</h3>
+    <p>{{recipe.instructions}}</p>
+  </div>
+
+  <div class="text-center mt-4">
+    {{#if logged}}
+      <form method="post" action="/favorite/{{recipe.id}}" class="d-inline">
+        <button type="submit" class="btn btn-success">
+          {{#if favorited}}✔ Saved{{else}}Add to Favorites{{/if}}
+        </button>
+      </form>
+    {{else}}
+      <p>
+        <a href="/login" class="btn btn-success">Log-in to Favorite!</a>
+      </p>
+    {{/if}}
+  </div>
+</div>
 

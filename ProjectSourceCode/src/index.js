@@ -422,7 +422,7 @@ app.get('/logout', (req, res) => {
   });
 });
 
-app.post('/add_recipe', async (req, res) => {
+/*app.post('/add_recipe', async (req, res) => {
   try {
       const {
           title,
@@ -485,7 +485,7 @@ app.post('/add_recipe', async (req, res) => {
       console.error(err);
       res.status(500).send('Error adding recipe');
   }
-});
+});*/
 
 
 // *********************************************************
@@ -520,6 +520,7 @@ async function recipePage(id, req) {
 
     id: results[0].id,
     name: results[0].name,
+    image_url: results[0].image_url,
     description: results[0].description,
     instructions: results[0].instructions,
     ingredients: ingredients,
