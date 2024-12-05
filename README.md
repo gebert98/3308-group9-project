@@ -37,7 +37,7 @@ To run the application locally, ensure you have the following installed:
 ## Environment Variables  
 Create a `.env` file in the root directory and add the following credentials:  
 
-#env: 
+##env: 
 
 POSTGRES_USER="postgres" 
 POSTGRES_PASSWORD="pwd"  
@@ -46,7 +46,7 @@ POSTGRES_DB="users_db"
 SESSION_SECRET="YbyWeG5iNJZ9kW4l"  
 
 
-#Instructions to Run Locally
+##Instructions to Run Locally
 To set up and run the application locally:
 
 Clone the Repository
@@ -64,7 +64,7 @@ Set Up the Database:
 Start PostgreSQL and create a database with the name specified in the .env file (users_db).
 Ensure the POSTGRES_USER and POSTGRES_PASSWORD match your PostgreSQL configuration.
 
-#Start the Application
+##Start the Application
 
 Build and Start the Docker Containers
 Use Docker Compose to set up the application and database:
@@ -79,7 +79,7 @@ Stop the Application
 When done, stop the containers with:
 docker-compose down
 
-#Running Tests
+##Running Tests
 Follow these steps to run the test suite:
 
 
