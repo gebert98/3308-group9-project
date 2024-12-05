@@ -1,8 +1,10 @@
 <header>
  <nav class="navbar navbar-expand-sm border-bottom">
    <div class="container">
+    <a class="navbar-brand" href="/home">🌎</a>
+
      <button
-       class="navbar-toggler ms-auto"
+       class="navbar-toggler"
        type="button"
        data-bs-toggle="collapse"
        data-bs-target="#navbar-collapse"
@@ -11,21 +13,36 @@
        aria-label="Toggle navigation">
        <span class="navbar-toggler-icon"></span>
      </button>
-     <div class="collapse navbar-collapse" id="navbar-collapse">
-       <ul class="navbar-nav me-auto">
-         <li class="nav-item">
-           <!-- TODO: For Discover, add a <a> tag with an attribute href to call the '/discover' API -->
+      <div class="collapse navbar-collapse" id="navbar-collapse">
+        <!-- LEFT -->
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="/discover">Discover</a>
+          </li>
+        </ul>
+
+        <!-- RIGHT -->
+        <ul class="navbar-nav ms-auto">
+          {{#if logged}}
+          <li class="nav-item">
+            <a class="nav-link" href="/account">Account</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/logout">Logout</a>
+          </li>
+          {{else}}
+          <li class="nav-item">
             <a class="nav-link" href="/register">Register</a>
-         </li>
-         <li>
+          </li>
+          <li class="nav-item">
             <a class="nav-link" href="/login">Log-In</a>
-         </li>
-       </ul>
-       <div class="nav-item me-1">
-         <!-- TODO: For Logout, add a <a> tag with an attribute href to call the '/logout' API -->
-         <a class="nav-link" href="/home">🌎Home</a>
-       </div>
-     </div>
-   </div>
- </nav>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/home">Home</a>
+          </li>
+          {{/if}}
+        </ul>
+      </div>
+    </div>
+  </nav>
 </header>

@@ -12,6 +12,29 @@ const fs = require('fs');
 
 // -------------------------------------  APP CONFIG   ----------------------------------------------
 
+// Session configuration
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || 'default_secret',
+    saveUninitialized: true,
+    resave: true,
+  })
+);
+
+app.use((req, res, next) => { //set the "logged" var for all the templates (specificaly added for navbar)
+  res.locals.logged= !!req.session.user;
+  //res.locals.logged=true;
+  next();
+});
+
+function auth(req, res, next) { //auth function. include in route to enable auth for that route
+  if(req.session.user){
+    return next();
+  }
+  res.redirect('/login');
+}
+
+
 // Body parsers
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -26,14 +49,6 @@ app.use(
 // Static files (CSS, JS, images)
 app.use(express.static('public'));
 
-// Session configuration
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || 'default_secret',
-    saveUninitialized: true,
-    resave: true,
-  })
-);
 
 // ------------------------------------- HANDLEBARS CONFIGURATION --------------------------------------------
 
@@ -78,6 +93,8 @@ const waitForDatabase = async (retries = 3, interval = 3000) => {
 waitForDatabase();  // Wait for DB before starting the server
 
 
+
+
 // ------------------------------------- ROUTES AND HANDLERS --------------------------------------------
 
 // Render home
@@ -110,6 +127,73 @@ app.get('/register', (req, res) => {
 // Render Login page
 app.get('/login', (req, res) => {
   res.render('pages/login',{});
+});
+
+// Render Discover page
+app.get('/discover', async (req, res) => {
+  const query = `
+    SELECT DISTINCT country
+    FROM recipes
+    WHERE country IS NOT NULL;
+  `; // get a list of all the countries with at least one associated recipe
+
+  const result = await db.query(query);
+  res.render('pages/discover',{countries: result});
+});
+
+app.get('/account/', auth, (req,res) =>{
+  //if(!req.session.user) res.redirect('/login');
+  res.redirect(`/account/${req.session.user.username}`);
+});
+
+app.get('/account/:username', auth, async (req,res) =>{
+  if (req.params.username !== req.session.user.username) {
+    return res.status(403).send('Forbidden'); //don't access other people's account page
+  }
+  const user = req.session.user;
+  const query = `
+    SELECT recipes.*
+    FROM recipes
+    JOIN favorites ON recipes.id = favorites.recipe_id
+    WHERE favorites.user_id=$1;
+`;
+  const recipes = await db.query(query, [user.id])
+
+  res.render('pages/account', { user, recipes, currentUrl: req.originalUrl });
+});
+
+app.post('/account/update', auth, async (req, res) => {
+  const { email, password, userId } = req.body; // evidently this allows you to set vars with the same name. neat
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; //regex ... sigh
+  const e_query = `
+            UPDATE users
+            SET email = $1
+            WHERE id = $2;
+        `;
+  const p_query = `
+            UPDATE users
+            SET password = $1
+            WHERE id = $2;
+        `;
+
+
+
+  if (!emailRegex.test(email)){ // test email
+    return res.status(400).send('Invalid email!');
+  }
+
+  try{
+      await db.query(e_query, [email, userId]); //set email
+      if (password){
+        const hashedPass = await bcrypt.hash(password, 10); //salt 10
+        await db.query(p_query, [hashedPass, userId]);
+      }
+    req.session.user.email = email;
+    res.redirect("/logout");
+  } catch(error) {
+    console.error('Error updating account: ', error);
+    res.status(500).send('An error occurred while updating your account.');
+  }
 });
 
 // Get add recipe page for clicked on country:
@@ -155,17 +239,15 @@ app.get('/recipes/:country', async (req, res) => {
         `;
         recipes = await db.query(recipesQuery, [country]);
     }
-    const logged = req.session.user?true:false;
-    console.log("recipes: ", recipes);
+       console.log("recipes: ", recipes);
 
 
     // Send a 200 response with the page regardless of whether recipes are found
     res.status(200).render('pages/recipes', {
       country,
       recipes: recipes || [], // Default to an empty array if no recipes
-      currentUrl: req.originalUrl, // current url, this is so that the favorite button redirects back to the correct page
-      logged
-    });
+      currentUrl: req.originalUrl // current url, this is so that the favorite button redirects back to the correct page
+      });
   } catch (error) {
     console.error('Error fetching recipes:', error);
     res.status(500).send('Failed to load recipes');
@@ -357,8 +439,9 @@ app.post('/login', async (req, res) => {
       }
 
       const user = result[0];
-
+      //console.log("passwords:", password, user.password);
       const match = await bcrypt.compare(password, user.password);
+      
 
       if (!match) {
           console.log('Invalid password');
@@ -492,8 +575,7 @@ async function recipePage(id, req) {
     return 404;
   }
 
-  const logged = req.session.user ? true : false;
-
+  
   const recipe = {
 
     id: results[0].id,
@@ -502,7 +584,7 @@ async function recipePage(id, req) {
     instructions: results[0].instructions,
     ingredients: ingredients,
   }  
-  return [recipe, logged, favorited];
+  return [recipe, favorited];
 }
 
 app.get('/recipe/:id', async (req, res) => {
@@ -513,10 +595,9 @@ app.get('/recipe/:id', async (req, res) => {
       return res.status(404).send('Error: No such recipe');
     }
     const recipe  = result[0];
-    const logged = result[1];
-    const favorited = result[2];
+    const favorited = result[1];
     console.log(result);
-    res.render('pages/display_recipe', {recipe, logged, favorited});
+    res.render('pages/display_recipe', {recipe, favorited});
   }
   catch(e) {
     console.error(e);
@@ -572,6 +653,9 @@ app.get('/welcome', (req, res) => {
   res.json({status: 'success', message: 'Welcome!'});
 });
 /*************************************************** */
+
+
+
 
 // ------------------------------------- START SERVER -----------------------------------------------
 const PORT = process.env.PORT || 3000;
