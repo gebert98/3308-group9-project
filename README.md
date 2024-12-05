@@ -1,7 +1,7 @@
-# Global Recipe Map  
+# Flavor Finder 
 
 ## Overview  
-**Global Recipe Map** is an interactive web application that allows users to explore and experience culinary delights from around the world. By clicking on an interactive globe, users can discover diverse recipes, traditional dishes, and street foods specific to each geographic location. The platform fosters a deeper understanding of global cuisines and brings international flavors to home kitchens.  
+**Flavor Finder** is an interactive web application that allows users to explore and experience culinary delights from around the world. By clicking on an interactive globe, users can discover diverse recipes, traditional dishes, and street foods specific to each geographic location. The platform fosters a deeper understanding of global cuisines and brings international flavors to home kitchens.  
 
 ## Contributors  
 This project was developed by:  
@@ -82,15 +82,16 @@ docker-compose down
 ## Running Tests
 Follow these steps to run the test suite:
 
-
-
-View Results
-Test results will be displayed in the terminal. Verify functionality and address any issues reported.
+1. Open the `docker-compose.yaml` file
+2. Replace the start command with `command: 'npm run runandtest'`
+3. Run `docker compose down -v` to ensure that there is no database currently created
+4. Run `docker compose up`
+5. Test results will be displayed in the terminal. Verify functionality and address any issues reported.
 
 # Deployed Application
 Access the live version of the application here:
 https://three308-group9-project.onrender.com 
 
-# Explore global cuisines and expand your culinary horizons with Global Recipe Map! 🌍🍴
+# Explore global cuisines and expand your culinary horizons with Flavor Finder! 🌍🍴
 
 
