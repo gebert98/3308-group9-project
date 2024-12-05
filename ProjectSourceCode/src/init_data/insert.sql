@@ -164,3 +164,156 @@ VALUES
     (5, (SELECT id FROM ingredients WHERE name = 'Rice'), 1, 'cup'),
     (5, (SELECT id FROM ingredients WHERE name = 'Nori'), 5, 'pieces'),
     (5, (SELECT id FROM ingredients WHERE name = 'Fillings'), 2, 'cups');
+
+-- Insert recipe
+INSERT INTO recipes (name, image_url, description, instructions, country, prep_time, cook_time)
+VALUES (
+    'Tacos', 
+    '/images/uploads/Tacos.png', 
+    'Tacos are a traditional Mexican dish consisting of small hand-sized corn or wheat tortillas topped with a filling, folded, and eaten by hand.', 
+    'Prepare the tortilla. Add the filling of your choice (beef, chicken, or beans). Top with salsa, lettuce, and cheese.', 
+    'Mexico', 
+    10, 
+    15
+)
+RETURNING id;
+
+-- Ingredients for Tacos
+INSERT INTO ingredients (name) VALUES ('Tortilla') ON CONFLICT (name) DO NOTHING;
+INSERT INTO ingredients (name) VALUES ('Beef') ON CONFLICT (name) DO NOTHING;
+INSERT INTO ingredients (name) VALUES ('Cheese') ON CONFLICT (name) DO NOTHING;
+INSERT INTO ingredients (name) VALUES ('Lettuce') ON CONFLICT (name) DO NOTHING;
+INSERT INTO ingredients (name) VALUES ('Salsa') ON CONFLICT (name) DO NOTHING;
+
+-- Link ingredients to Tacos
+INSERT INTO recipes_ingredients (recipe_id, ingredient_id, quantity, unit)
+VALUES 
+    (6, (SELECT id FROM ingredients WHERE name = 'Tortilla'), 4, 'pieces'),
+    (6, (SELECT id FROM ingredients WHERE name = 'Beef'), 1, 'cup'),
+    (6, (SELECT id FROM ingredients WHERE name = 'Cheese'), 0.5, 'cup'),
+    (6, (SELECT id FROM ingredients WHERE name = 'Lettuce'), 1, 'cup'),
+    (6, (SELECT id FROM ingredients WHERE name = 'Salsa'), 0.5, 'cup');
+
+-- Insert recipe
+INSERT INTO recipes (name, image_url, description, instructions, country, prep_time, cook_time)
+VALUES (
+    'Spaghetti Carbonara', 
+    '/images/default.png', 
+    'A classic Italian pasta dish made with eggs, cheese, pancetta, and pepper, known for its creamy texture and simple yet rich flavor.', 
+    'Cook spaghetti. Sauté pancetta. Whisk eggs and cheese. Combine all and serve with pepper.', 
+    'Italy', 
+    10, 
+    20
+)
+RETURNING id;
+
+-- Ingredients for Carbonara
+INSERT INTO ingredients (name) VALUES ('Spaghetti') ON CONFLICT (name) DO NOTHING;
+INSERT INTO ingredients (name) VALUES ('Pancetta') ON CONFLICT (name) DO NOTHING;
+INSERT INTO ingredients (name) VALUES ('Eggs') ON CONFLICT (name) DO NOTHING;
+INSERT INTO ingredients (name) VALUES ('Parmesan Cheese') ON CONFLICT (name) DO NOTHING;
+INSERT INTO ingredients (name) VALUES ('Black Pepper') ON CONFLICT (name) DO NOTHING;
+
+-- Link ingredients to Carbonara
+INSERT INTO recipes_ingredients (recipe_id, ingredient_id, quantity, unit)
+VALUES 
+    (7, (SELECT id FROM ingredients WHERE name = 'Spaghetti'), 300, 'grams'),
+    (7, (SELECT id FROM ingredients WHERE name = 'Pancetta'), 150, 'grams'),
+    (7, (SELECT id FROM ingredients WHERE name = 'Eggs'), 3, 'pieces'),
+    (7, (SELECT id FROM ingredients WHERE name = 'Parmesan Cheese'), 1, 'cup'),
+    (7, (SELECT id FROM ingredients WHERE name = 'Black Pepper'), 1, 'tsp');
+
+-- Insert recipe
+INSERT INTO recipes (name, image_url, description, instructions, country, prep_time, cook_time)
+VALUES (
+    'Poutine', 
+    '/images/default.png', 
+    'A Canadian comfort food consisting of French fries topped with cheese curds and smothered in hot gravy.', 
+    'Prepare fries. Add cheese curds on top. Pour hot gravy over and serve.', 
+    'Canada', 
+    15, 
+    20
+)
+RETURNING id;
+
+-- Ingredients for Poutine
+INSERT INTO ingredients (name) VALUES ('Potatoes') ON CONFLICT (name) DO NOTHING;
+INSERT INTO ingredients (name) VALUES ('Cheese Curds') ON CONFLICT (name) DO NOTHING;
+INSERT INTO ingredients (name) VALUES ('Gravy') ON CONFLICT (name) DO NOTHING;
+
+-- Link ingredients to Poutine
+INSERT INTO recipes_ingredients (recipe_id, ingredient_id, quantity, unit)
+VALUES 
+    (8, (SELECT id FROM ingredients WHERE name = 'Potatoes'), 3, 'pieces'),
+    (8, (SELECT id FROM ingredients WHERE name = 'Cheese Curds'), 1, 'cup'),
+    (8, (SELECT id FROM ingredients WHERE name = 'Gravy'), 1, 'cup');
+
+-- Insert recipe
+INSERT INTO recipes (name, image_url, description, instructions, country, prep_time, cook_time)
+VALUES (
+    'Pad Thai', 
+    '/images/uploads/PadThai.png', 
+    'Pad Thai is a classic Thai stir-fried noodle dish that combines rice noodles, shrimp or chicken, eggs, and a flavorful sauce made with tamarind, fish sauce, and palm sugar. It is typically garnished with peanuts and lime.', 
+    'Soak rice noodles. Stir-fry chicken or shrimp with garlic. Add noodles, sauce, and egg. Garnish with peanuts, lime, and bean sprouts.', 
+    'Thailand', 
+    15, 
+    20
+)
+RETURNING id;
+
+-- Ingredients for Pad Thai
+INSERT INTO ingredients (name) VALUES ('Rice Noodles') ON CONFLICT (name) DO NOTHING;
+INSERT INTO ingredients (name) VALUES ('Chicken') ON CONFLICT (name) DO NOTHING;
+INSERT INTO ingredients (name) VALUES ('Shrimp') ON CONFLICT (name) DO NOTHING;
+INSERT INTO ingredients (name) VALUES ('Eggs') ON CONFLICT (name) DO NOTHING;
+INSERT INTO ingredients (name) VALUES ('Tamarind Paste') ON CONFLICT (name) DO NOTHING;
+INSERT INTO ingredients (name) VALUES ('Fish Sauce') ON CONFLICT (name) DO NOTHING;
+INSERT INTO ingredients (name) VALUES ('Palm Sugar') ON CONFLICT (name) DO NOTHING;
+INSERT INTO ingredients (name) VALUES ('Peanuts') ON CONFLICT (name) DO NOTHING;
+INSERT INTO ingredients (name) VALUES ('Lime') ON CONFLICT (name) DO NOTHING;
+
+-- Link ingredients to Pad Thai
+INSERT INTO recipes_ingredients (recipe_id, ingredient_id, quantity, unit)
+VALUES 
+    (9, (SELECT id FROM ingredients WHERE name = 'Rice Noodles'), 200, 'grams'),
+    (9, (SELECT id FROM ingredients WHERE name = 'Chicken'), 200, 'grams'),
+    (9, (SELECT id FROM ingredients WHERE name = 'Shrimp'), 150, 'grams'),
+    (9, (SELECT id FROM ingredients WHERE name = 'Eggs'), 2, 'pieces'),
+    (9, (SELECT id FROM ingredients WHERE name = 'Tamarind Paste'), 2, 'tbsp'),
+    (9, (SELECT id FROM ingredients WHERE name = 'Fish Sauce'), 2, 'tbsp'),
+    (9, (SELECT id FROM ingredients WHERE name = 'Palm Sugar'), 1, 'tbsp'),
+    (9, (SELECT id FROM ingredients WHERE name = 'Peanuts'), 0.5, 'cup'),
+    (9, (SELECT id FROM ingredients WHERE name = 'Lime'), 1, 'piece');
+
+-- Insert recipe
+INSERT INTO recipes (name, image_url, description, instructions, country, prep_time, cook_time)
+VALUES (
+    'Tom Yum Soup', 
+    '/images/default.png', 
+    'Tom Yum Soup is a hot and sour Thai soup known for its bold flavors. It includes shrimp, lemongrass, kaffir lime leaves, and chili paste, making it a beloved dish worldwide.', 
+    'Boil water with lemongrass and kaffir lime leaves. Add shrimp, mushrooms, and chili paste. Finish with lime juice and fish sauce.', 
+    'Thailand', 
+    10, 
+    20
+)
+RETURNING id;
+
+-- Ingredients for Tom Yum Soup
+INSERT INTO ingredients (name) VALUES ('Shrimp') ON CONFLICT (name) DO NOTHING;
+INSERT INTO ingredients (name) VALUES ('Lemongrass') ON CONFLICT (name) DO NOTHING;
+INSERT INTO ingredients (name) VALUES ('Kaffir Lime Leaves') ON CONFLICT (name) DO NOTHING;
+INSERT INTO ingredients (name) VALUES ('Chili Paste') ON CONFLICT (name) DO NOTHING;
+INSERT INTO ingredients (name) VALUES ('Fish Sauce') ON CONFLICT (name) DO NOTHING;
+INSERT INTO ingredients (name) VALUES ('Lime Juice') ON CONFLICT (name) DO NOTHING;
+INSERT INTO ingredients (name) VALUES ('Mushrooms') ON CONFLICT (name) DO NOTHING;
+
+-- Link ingredients to Tom Yum Soup
+INSERT INTO recipes_ingredients (recipe_id, ingredient_id, quantity, unit)
+VALUES 
+    (10, (SELECT id FROM ingredients WHERE name = 'Shrimp'), 200, 'grams'),
+    (10, (SELECT id FROM ingredients WHERE name = 'Lemongrass'), 2, 'stalks'),
+    (10, (SELECT id FROM ingredients WHERE name = 'Kaffir Lime Leaves'), 5, 'pieces'),
+    (10, (SELECT id FROM ingredients WHERE name = 'Chili Paste'), 2, 'tbsp'),
+    (10, (SELECT id FROM ingredients WHERE name = 'Fish Sauce'), 2, 'tbsp'),
+    (10, (SELECT id FROM ingredients WHERE name = 'Lime Juice'), 2, 'tbsp'),
+    (10, (SELECT id FROM ingredients WHERE name = 'Mushrooms'), 1, 'cup');
