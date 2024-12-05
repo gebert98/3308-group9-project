@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS recipes (
   name VARCHAR(100) NOT NULL,
   image_url TEXT DEFAULT '/images/default.png',
   description TEXT,
+  instructions TEXT,
   country VARCHAR(100),
   prep_time INTEGER,
   cook_time INTEGER,

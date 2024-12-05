@@ -60,11 +60,12 @@ VALUES ('United States')
 ON CONFLICT (name) DO NOTHING;
 
 -- Insert recipe
-INSERT INTO recipes (name, image_url, description, country, prep_time, cook_time)
+INSERT INTO recipes (name, image_url, description, instructions, country, prep_time, cook_time)
 VALUES (
     'Pozole', 
     '/images/uploads/pozole.png', 
-    'A traditional Mexican soup, pozole is usually enjoyed around the holidays, but it makes a comforting, slightly spicy, slightly smoky dish throughout the year, topped with diced avocado and a dollop of sour cream.', 
+    'A traditional Mexican soup, pozole is usually enjoyed around the holidays, but it makes a comforting, slightly spicy, slightly smoky dish throughout the year, topped with diced avocado and a dollop of sour cream.',
+    'In a Dutch oven, saute chiles in 1 tablespoon oil over medium heat until heated through, 1-2 minutes, pressing with a spatula (do not brown). Using a slotted spoon, transfer chiles to a bowl; add the boiling water. Soak until softened, about 20 minutes. Remove stems and seeds, reserving water. In the Dutch oven, brown pork in remaining 1 tablespoon oil in batches, sauteing onion and garlic with the last batch of pork. Return all pork to pan and add broth. Bring to a boil. Reduce heat; cover and simmer until meat is tender, about 30 minutes. Transfer chiles and soaking liquid to a blender; cover and process until smooth. Strain through a fine strainer, reserving pulp and discarding skins. Add pulp to pork mixture. Stir in hominy, oregano and salt. Cover and simmer for 20 minutes. Serve with optional toppings as desired.',
     'Mexico', 
     15, 
     65
@@ -98,11 +99,12 @@ VALUES
     (3, (SELECT id FROM ingredients WHERE name = 'salt'), 1, 'teaspoon');
 
 -- Insert recipe
-INSERT INTO recipes (name, image_url, description, country, prep_time, cook_time)
+INSERT INTO recipes (name, image_url, description, instructions, country, prep_time, cook_time)
 VALUES (
     'Kizaka', 
     '/images/uploads/kizaka.png', 
-    'Kizaka is a healthy, and authentic plant-based dish that is also wildly popular in Angola. I found cassava leaves at a local African grocer, but chopped spinach would also make a good substitute.', 
+    'Kizaka is a healthy, and authentic plant-based dish that is also wildly popular in Angola. I found cassava leaves at a local African grocer, but chopped spinach would also make a good substitute.',
+    'Cook the greens in boiling water till soft. In frying pan, sauté the onions until clear, add garlic and ginger until soft and aromatic. Add tomatoes and cook until tender Add peanut powder/butter and continue cooking for 5 minutes. Combine with the greens (or stir in the chopped spinach and broth) and mix with salt, pepper, and red pepper flakes. Serve with rice!',
     'Angola', 
     20, 
     15
@@ -139,11 +141,12 @@ VALUES
     (4, (SELECT id FROM ingredients WHERE name = 'Red pepper flakes'), 1, 'teaspoon'),
     (4, (SELECT id FROM ingredients WHERE name = 'Rice'), 2, 'cups');
 -- Insert recipe
-INSERT INTO recipes (name, image_url, description, country, prep_time, cook_time)
+INSERT INTO recipes (name, image_url, description, instructions, country, prep_time, cook_time)
 VALUES (
     'Onigiri', 
     '/images/uploads/Onigiri.png', 
     'Onigiri is basically a rice ball wrapped in black seaweed. It is one of the most popular snacks, sold at every supermarket and every konbini! The most famous traditional Japanese dishes are relatively easy to make and usually contain some salt and ingredients or filings in the rice balls, such as grilled salmon, pickled plum, or spicy cod roe.', 
+    'Cook the rice. Prepare filling. Shape the rice around the filling and wrap with the nori.',
     'Japan', 
     5, 
     15
