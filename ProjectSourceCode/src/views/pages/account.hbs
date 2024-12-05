@@ -1,0 +1,85 @@
+<div class="container my-4">
+  <h1 class="text-center">{{user.username}}'s Account Page</h1>
+  <div class="row">
+
+    <!-- LEFT: change info -->
+    <div class="col-md-6">
+      <div class="p-4 bg-light rounded border border-dark">
+        <h2 class="text-center">Change Information</h2>
+        <form action="/account/update" method="POST">
+          <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <input
+              type="email"
+              class="form-control"
+              id="email"
+              name="email"
+              value="{{user.email}}"
+              required
+            />
+            <small class="form-text text-muted">Email is required.</small>
+          </div>
+          <div class="mb-3">
+            <label for="password" class="form-label">New Password</label>
+            <input
+              type="password"
+              class="form-control"
+              id="password"
+              name="password"
+              minlength="3"
+            />
+            <small class="form-text text-muted">Leave password blank if not changing.</small>
+          </div>
+          <input type="hidden" name="userId" value={{user.id}}>
+          <button type="submit" class="btn btn-primary w-100">Update Account</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- RIGHT: favs -->
+    <div class="col-md-6">
+      <div>
+        <h2 class="text-center">Favorite Recipes</h2>
+        {{#if recipes.length}}
+          <div class="row">
+            {{#each recipes}}
+              <div class="col-md-12 mb-4">
+                <div class="card h-100 shadow-sm">
+                  <div class="card-body">
+                    <h5 class="card-title">{{name}}</h5>
+                    <p class="card-text">
+                      {{#if description}}
+                        {{description}}
+                      {{else}}
+                        No description available.
+                      {{/if}}
+                    </p>
+                    <p class="card-text">
+                      <small class="text-muted">Prep Time: {{prep_time}} minutes</small>
+                    </p>
+                  </div>
+                  <div class="card-footer text-center">
+                    <a href="/recipe/{{id}}" class="btn btn-primary m-1">View Recipe</a>
+                    {{#if ../logged}}
+                    <form action="/favorite/{{id}}" method="POST">
+                      <input type="hidden" name="redirectUrl" value="{{../currentUrl}}">
+                      <button type="submit" class="btn btn-danger">
+                        Remove from Favorites
+                      </button>
+                    </form>
+                    {{else}}
+                    <a href="/login" class="btn btn-success">Log-in to Favorite!</a>
+                    {{/if}}
+                  </div>
+                </div>
+              </div>
+            {{/each}}
+          </div>
+        {{else}}
+          <p class="text-center">No favorite recipes found.</p>
+        {{/if}}
+      </div>
+    </div>
+  </div>
+</div>
+

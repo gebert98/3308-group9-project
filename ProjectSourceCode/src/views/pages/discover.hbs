@@ -1,0 +1,17 @@
+<div class="container my-4">
+  <h1 class="text-center">Discover Recipes by Country</h1>
+  <div class="row">
+    {{#if countries.length}}
+      {{#each countries}}
+        <div class="col-md-3 mb-4">
+          <a href="/recipes/{{this.country}}" class="btn btn-primary w-100 text-white">
+            {{this.country}}
+          </a>
+        </div>
+      {{/each}}
+    {{else}}
+      <p class="text-center">No countries found.</p>
+    {{/if}}
+  </div>
+</div>
+
