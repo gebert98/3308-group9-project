@@ -1,6 +1,9 @@
 <body>
   <div class="container mt-5">
     <h2 class="text-center mb-4">Register</h2>
+    {{#if error}}
+      <div class="alert alert-danger">{{error}}</div>
+    {{/if}}
     <form action="/register" method="POST" class="w-50 mx-auto">
       <div class="mb-3">
         <label for="username" class="form-label">Username</label>
@@ -12,5 +15,6 @@
       </div>
       <button type="submit" class="btn btn-primary w-100">Submit</button>
     </form>
+    <p class="text-center mt-2">Already have an account? <a href="/login">Log in here</a></p>
   </div>
 </body>

@@ -427,6 +427,11 @@ app.post('/register', async (req, res) => {
   if (typeof username !== 'string') {
     return res.status(400).send("Invalid Username");
   }
+  const names = await db.query('SELECT id FROM users WHERE username = $1', [username]);
+  if(names.length>0){
+    console.log("names:", names);
+    return res.status(400).render('pages/register', {error: 'Username is already taken'});
+  }
   // Insert username and hashed password into the 'users' table
   try {
       const result = await db.query(
@@ -457,7 +462,8 @@ app.post('/login', async (req, res) => {
 
       if (result.length === 0) {
           console.log('User not found');
-          return res.redirect('/register'); // Redirect to registration if user not found
+          return res.status(400).render('pages/login', 
+            { error: "Invalid username.", username: true}); // Redirect to registration if user not found
       }
 
       const user = result[0];
@@ -467,7 +473,7 @@ app.post('/login', async (req, res) => {
 
       if (!match) {
           console.log('Invalid password');
-          return res.status(400).render('pages/login', { message: 'Invalid password' });
+          return res.status(400).render('pages/login', { error: 'Invalid password' });
       }
 
       req.session.user = user;
