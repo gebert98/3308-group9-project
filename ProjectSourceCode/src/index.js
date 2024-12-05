@@ -303,7 +303,7 @@ app.get('/recipes/:country', async (req, res) => {
 
 // Add recipe to recipe table and other relations
 app.post('/add_recipe', upload.single('recipeImage'), async (req, res) => {
-  const { name, country, description, prep_time, cook_time, servings, difficulty } = req.body;
+  const { name, country, description, instructions, prep_time, cook_time, servings, difficulty } = req.body;
   const ingredientNames = req.body.ingredient_name;
   const quantities = req.body.quantity;
   const units = req.body.unit;
@@ -315,12 +315,13 @@ app.post('/add_recipe', upload.single('recipeImage'), async (req, res) => {
     const imagePath = req.file ? `/images/uploads/${req.file.filename}` : '/images/default.png';
 
     const recipeResult = await db.query(
-      `INSERT INTO recipes (name, description, country, prep_time, cook_time, servings, difficulty, image_url)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO recipes (name, description, instructions, country, prep_time, cook_time, servings, difficulty, image_url)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING id`,
       [
         name,
         description,
+        instructions,
         country,
         prep_time,
         cook_time,
